@@ -33,8 +33,8 @@ Tasks are designed around real-world research scenarios, requiring multi-source 
 
 | Metric | Description |
 |--------|-------------|
-| **Analytical Depth & Breadth** |  | 
 | **Citation Support** |  | 
+| **Analytical Depth & Breadth** |  | 
 | **Factual & Logical Consistency** |  | 
 | **Instruction Alignment** |  | 
 | **Writing Quality** |  | 
