@@ -1,0 +1,27 @@
+main_agent:
+  tools:
+  max_turns: 20  # Maximum number of turns for main agent execution
+
+sub_agents:
+  agent-planner:
+    tools:
+      - tool-google-search
+    max_turns: 20
+  agent-chart-generator:
+    tools:
+      - tool-python
+      - tool-google-search
+    max_turns: 10
+  agent-image-searcher:
+    tools:
+      - tool-image-search
+      - tool-vqa
+    max_turns: 5
+  agent-writer:
+    tools:
+      - tool-google-search
+    max_turns: 10
+
+# Settings for context management
+keep_tool_result: -1
+format_error_retry_limit: 0  # Maximum number of retries for format errors in context management
