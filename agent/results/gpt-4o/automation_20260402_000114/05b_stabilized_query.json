@@ -1,0 +1,43 @@
+{
+  "user_role": "能源管理系统开发工程师",
+  "main_task": "设计和实施基于区块链的分布式能源资源管理系统，以提高能源交易的透明度和效率。",
+  "sub_questions": [
+    "如何利用区块链技术提高分布式能源交易的透明度？",
+    "在分布式能源管理中，区块链如何简化数据处理流程？",
+    "有哪些成功的区块链应用案例可以借鉴以优化能源管理系统？"
+  ],
+  "multimodal_requirements": [
+    {
+      "type": "image",
+      "description": "展示区块链在能源管理中的应用示意图。",
+      "source": "https://cdn.hk01.com/di/media/images/dw/20260223/1102705083574915072098357.png/xgwaooaL7gXWx4PySsOHpE3VY35W_BXGtAMS4LQDEuA",
+      "source_page": "https://global.hk01.com/01论坛/60324365/港大经管-绿色金融中的区块链应用-香港经验与机遇",
+      "verification": "Validated by direct HTTP accessibility check and VQA content check."
+    },
+    {
+      "type": "chart",
+      "description": "显示区块链技术在分布式能源管理中提高效率的统计数据。",
+      "source_page": "公報- 商標的保護 - 法務局",
+      "data_source": "https://bo.dsaj.gov.mo/bo/ii/2025/29/economia01_cn.asp",
+      "reproducibility_note": "Use the public source page '公報- 商標的保護 - 法務局' and extract the quantitative values described there to rebuild the chart."
+    }
+  ],
+  "citations": [
+    {
+      "label": "reference",
+      "url": "https://www.blockchain-energy-management.com"
+    },
+    {
+      "label": "reference",
+      "url": "https://www.nature.com/articles/s41560-020-0586-4"
+    },
+    {
+      "label": "image_source",
+      "url": "https://global.hk01.com/01论坛/60324365/港大经管-绿色金融中的区块链应用-香港经验与机遇"
+    },
+    {
+      "label": "chart_source",
+      "url": "https://bo.dsaj.gov.mo/bo/ii/2025/29/economia01_cn.asp"
+    }
+  ]
+}

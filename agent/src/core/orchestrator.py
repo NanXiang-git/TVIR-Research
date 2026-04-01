@@ -2,6 +2,7 @@
 # This source code is licensed under the MIT License.
 
 import asyncio
+from copy import deepcopy
 import gc
 import json
 import logging
@@ -14,10 +15,19 @@ from collections import defaultdict
 from datetime import date
 from typing import Any, Dict, List, Optional, Tuple
 
+import requests
 from miroflow_tools.manager import ToolManager
 from omegaconf import DictConfig
 
 from ..config.settings import expose_sub_agents_as_tools
+from .automation_utils import (
+    infer_quality_checks,
+    normalize_query_result,
+    normalize_refine_repair,
+    normalize_refine_review,
+    normalize_topic_result,
+    synthesize_query_description,
+)
 from ..io.input_handler import process_input
 from ..io.output_formatter import OutputFormatter
 from ..llm.factory import ClientFactory
@@ -26,6 +36,11 @@ from ..logging.task_logger import (
     get_utc_plus_8_time,
 )
 from ..utils.parsing_utils import extract_llm_response_text
+from ..utils.automation_prompt_loader import (
+    generate_automation_summary_prompt,
+    generate_automation_system_prompt,
+    is_automation_agent,
+)
 from ..utils.prompt_utils import (
     generate_agent_specific_system_prompt,
     generate_agent_summarize_prompt,
@@ -579,12 +594,19 @@ class Orchestrator:
             )
 
         # Generate sub-agent system prompt
+        if is_automation_agent(sub_agent_name):
+            agent_prompt = generate_automation_system_prompt(
+                agent_type=sub_agent_name, language=self.task_lang
+            )
+        else:
+            agent_prompt = generate_agent_specific_system_prompt(
+                agent_type=sub_agent_name, language=self.task_lang
+            )
+
         system_prompt = self.llm_client.generate_agent_system_prompt(
             date=date.today(),
             mcp_servers=tool_definitions,
-        ) + generate_agent_specific_system_prompt(
-            agent_type=sub_agent_name, language=self.task_lang
-        )
+        ) + agent_prompt
 
         # Limit sub-agent turns
         if self.cfg.agent.sub_agents:
@@ -911,11 +933,18 @@ class Orchestrator:
             )
 
             # Generate summary_prompt to check token limits
-            temp_summary_prompt = generate_agent_summarize_prompt(
-                task_description,
-                agent_type=sub_agent_name,
-                language=self.task_lang,
-            )
+            if is_automation_agent(sub_agent_name):
+                temp_summary_prompt = generate_automation_summary_prompt(
+                    task_description=task_description,
+                    agent_type=sub_agent_name,
+                    language=self.task_lang,
+                )
+            else:
+                temp_summary_prompt = generate_agent_summarize_prompt(
+                    task_description,
+                    agent_type=sub_agent_name,
+                    language=self.task_lang,
+                )
 
             pass_length_check, message_history = self.llm_client.ensure_summary_context(
                 message_history, temp_summary_prompt
@@ -955,11 +984,18 @@ class Orchestrator:
             )
 
             # Generate sub agent summary prompt
-            summary_prompt = generate_agent_summarize_prompt(
-                task_description,
-                agent_type=sub_agent_name,
-                language=self.task_lang,
-            )
+            if is_automation_agent(sub_agent_name):
+                summary_prompt = generate_automation_summary_prompt(
+                    task_description=task_description,
+                    agent_type=sub_agent_name,
+                    language=self.task_lang,
+                )
+            else:
+                summary_prompt = generate_agent_summarize_prompt(
+                    task_description,
+                    agent_type=sub_agent_name,
+                    language=self.task_lang,
+                )
 
             if message_history[-1]["role"] == "user":
                 message_history.pop()
@@ -1616,6 +1652,862 @@ class Orchestrator:
         )
         gc.collect()
         return final_summary, final_boxed_answer
+
+    async def run_automated_pipeline(
+        self, domain: str, language: str, complexity: str
+    ) -> Dict[str, Any]:
+        """Generate a structured automation task through Topic -> Query -> Refine."""
+
+        self._initialize_result_directories()
+        self.task_lang = (
+            language if language in {"zh", "en"} else self._detect_language(domain)
+        )
+
+        workflow_start_time = time.time()
+        self.task_log.log_step(
+            "info",
+            "Automation Workflow | Start",
+            f"Starting automated task generation for domain='{domain}', language='{self.task_lang}', complexity='{complexity}'",
+        )
+
+        topic_result = await self.run_topic_generation_phase(domain, complexity)
+        self._save_intermediate_output("01_topic_candidates", topic_result, "json")
+
+        query_result = await self.run_query_construction_phase(
+            domain=domain,
+            language=self.task_lang,
+            complexity=complexity,
+            topic_result=topic_result,
+        )
+        self._save_intermediate_output("02_query_draft", query_result, "json")
+
+        review_result = await self.run_refine_review_phase(
+            domain=domain,
+            language=self.task_lang,
+            complexity=complexity,
+            topic_result=topic_result,
+            query_result=query_result,
+        )
+        self._save_intermediate_output("03_refine_review", review_result, "json")
+
+        repair_notes = []
+        final_review = review_result
+
+        if review_result.get("needs_repair") or not all(
+            review_result.get("quality_checks", {}).values()
+        ):
+            repair_result = await self.run_refine_repair_phase(
+                domain=domain,
+                language=self.task_lang,
+                complexity=complexity,
+                topic_result=topic_result,
+                query_result=query_result,
+                review_result=review_result,
+            )
+            self._save_intermediate_output("04_query_repaired", repair_result, "json")
+
+            repair_notes = repair_result.get("repair_notes", [])
+            query_result = normalize_query_result(
+                repair_result.get("repaired_query", query_result),
+                domain=domain,
+                language=self.task_lang,
+                complexity=complexity,
+                topic_result=topic_result,
+            )
+
+            final_review = await self.run_refine_review_phase(
+                domain=domain,
+                language=self.task_lang,
+                complexity=complexity,
+                topic_result=topic_result,
+                query_result=query_result,
+                phase_name="Automation Workflow | Refine Recheck",
+            )
+            self._save_intermediate_output("05_refine_recheck", final_review, "json")
+
+        (
+            query_result,
+            deterministic_checks,
+            stabilization_notes,
+        ) = await self._stabilize_automation_query(
+            query_result=query_result,
+            topic_result=topic_result,
+        )
+        if stabilization_notes:
+            repair_notes.extend(stabilization_notes)
+        self._save_intermediate_output("05b_stabilized_query", query_result, "json")
+
+        final_task = self._finalize_automation_task(
+            query_result=query_result,
+            topic_result=topic_result,
+            review_result=final_review,
+            repair_notes=repair_notes,
+            deterministic_checks=deterministic_checks,
+        )
+        self._save_intermediate_output("06_final_task", final_task, "json")
+
+        workflow_elapsed = time.time() - workflow_start_time
+        self.task_log.log_step(
+            "info",
+            "Automation Workflow | Completed",
+            f"Automated task workflow completed in {workflow_elapsed:.2f} seconds",
+        )
+        return final_task
+
+    async def run_topic_generation_phase(
+        self, domain: str, complexity: str
+    ) -> Dict[str, Any]:
+        phase_name = "Automation Workflow | Topic"
+        self.task_log.log_step(
+            "info",
+            phase_name,
+            "Starting topic generation phase",
+        )
+
+        if "agent-topic-generator" not in self.sub_agent_tool_managers:
+            self.task_log.log_step(
+                "warning",
+                phase_name,
+                "agent-topic-generator not available, using fallback topic result",
+            )
+            return normalize_topic_result({}, domain, complexity)
+
+        try:
+            result = await self.run_sub_agent(
+                "agent-topic-generator",
+                self._build_topic_generation_task_description(domain, complexity),
+            )
+            parsed = self._parse_json_result(result)
+            normalized = normalize_topic_result(parsed, domain, complexity)
+            self.task_log.log_step(
+                "info",
+                phase_name,
+                f"Selected topic: {normalized['selected_topic']['topic']}",
+            )
+            return normalized
+        except Exception as exc:
+            self.task_log.log_step(
+                "error",
+                phase_name,
+                f"Topic generation failed: {exc}",
+            )
+            return normalize_topic_result({}, domain, complexity)
+
+    async def run_query_construction_phase(
+        self,
+        domain: str,
+        language: str,
+        complexity: str,
+        topic_result: Dict[str, Any],
+    ) -> Dict[str, Any]:
+        phase_name = "Automation Workflow | Query"
+        self.task_log.log_step(
+            "info",
+            phase_name,
+            "Starting query construction phase",
+        )
+
+        if "agent-query-builder" not in self.sub_agent_tool_managers:
+            self.task_log.log_step(
+                "warning",
+                phase_name,
+                "agent-query-builder not available, using normalized fallback query",
+            )
+            return self._merge_topic_citations(
+                normalize_query_result({}, domain, language, complexity, topic_result),
+                topic_result,
+            )
+
+        try:
+            result = await self.run_sub_agent(
+                "agent-query-builder",
+                self._build_query_construction_task_description(
+                    domain=domain,
+                    language=language,
+                    complexity=complexity,
+                    topic_result=topic_result,
+                ),
+            )
+            parsed = self._parse_json_result(result)
+            normalized = normalize_query_result(
+                parsed, domain, language, complexity, topic_result
+            )
+            return self._merge_topic_citations(normalized, topic_result)
+        except Exception as exc:
+            self.task_log.log_step(
+                "error",
+                phase_name,
+                f"Query construction failed: {exc}",
+            )
+            fallback = normalize_query_result(
+                {}, domain, language, complexity, topic_result
+            )
+            return self._merge_topic_citations(fallback, topic_result)
+
+    async def run_refine_review_phase(
+        self,
+        domain: str,
+        language: str,
+        complexity: str,
+        topic_result: Dict[str, Any],
+        query_result: Dict[str, Any],
+        phase_name: str = "Automation Workflow | Refine Review",
+    ) -> Dict[str, Any]:
+        self.task_log.log_step(
+            "info",
+            phase_name,
+            "Starting refine inspection phase",
+        )
+
+        if "agent-refiner" not in self.sub_agent_tool_managers:
+            inferred_checks = infer_quality_checks(query_result)
+            needs_repair = not all(inferred_checks.values())
+            return {
+                "mode": "inspect",
+                "needs_repair": needs_repair,
+                "issues": []
+                if not needs_repair
+                else [
+                    "Fallback inspection detected missing evidence for one or more quality checks."
+                ],
+                "quality_checks": inferred_checks,
+            }
+
+        try:
+            result = await self.run_sub_agent(
+                "agent-refiner",
+                self._build_refine_review_task_description(
+                    domain=domain,
+                    language=language,
+                    complexity=complexity,
+                    topic_result=topic_result,
+                    query_result=query_result,
+                ),
+            )
+            review = normalize_refine_review(self._parse_json_result(result))
+            if not any(review["quality_checks"].values()):
+                review["quality_checks"] = infer_quality_checks(query_result)
+                review["needs_repair"] = not all(review["quality_checks"].values())
+            return review
+        except Exception as exc:
+            self.task_log.log_step(
+                "error",
+                phase_name,
+                f"Refine inspection failed: {exc}",
+            )
+            inferred_checks = infer_quality_checks(query_result)
+            return {
+                "mode": "inspect",
+                "needs_repair": not all(inferred_checks.values()),
+                "issues": [f"Fallback inspection used because refine inspection failed: {exc}"],
+                "quality_checks": inferred_checks,
+            }
+
+    async def run_refine_repair_phase(
+        self,
+        domain: str,
+        language: str,
+        complexity: str,
+        topic_result: Dict[str, Any],
+        query_result: Dict[str, Any],
+        review_result: Dict[str, Any],
+    ) -> Dict[str, Any]:
+        phase_name = "Automation Workflow | Refine Repair"
+        self.task_log.log_step(
+            "info",
+            phase_name,
+            "Starting refine repair phase",
+        )
+
+        if "agent-refiner" not in self.sub_agent_tool_managers:
+            return {
+                "mode": "repair",
+                "repaired_query": query_result,
+                "repair_notes": ["Repair agent unavailable; kept the inspected query as-is."],
+            }
+
+        try:
+            result = await self.run_sub_agent(
+                "agent-refiner",
+                self._build_refine_repair_task_description(
+                    domain=domain,
+                    language=language,
+                    complexity=complexity,
+                    topic_result=topic_result,
+                    query_result=query_result,
+                    review_result=review_result,
+                ),
+            )
+            return normalize_refine_repair(self._parse_json_result(result), query_result)
+        except Exception as exc:
+            self.task_log.log_step(
+                "error",
+                phase_name,
+                f"Refine repair failed: {exc}",
+            )
+            return {
+                "mode": "repair",
+                "repaired_query": query_result,
+                "repair_notes": [f"Repair fallback used because refine repair failed: {exc}"],
+            }
+
+    def _build_topic_generation_task_description(
+        self, domain: str, complexity: str
+    ) -> str:
+        return f"""# Topic Generation Task
+
+Input domain: {domain}
+Task complexity: {complexity}
+Target output language: {self.task_lang}
+
+Please do the following:
+1. Use google_search to discover technology, policy, market, and research developments from the last three years.
+2. Use scrape_website to verify the most important candidate evidence.
+3. Produce 3 candidate topics for high-value automation tasks and select the best one.
+4. Explain the practical value, research value, and frontier angle of each topic and attach verifiable source links.
+
+Notes:
+- Focus on changes from 2021 onward.
+- Do not output a report outline; output JSON only.
+"""
+
+    def _build_query_construction_task_description(
+        self,
+        domain: str,
+        language: str,
+        complexity: str,
+        topic_result: Dict[str, Any],
+    ) -> str:
+        topic_json = json.dumps(topic_result, ensure_ascii=False, indent=2)
+        return f"""# Query Construction Task
+
+Domain: {domain}
+Target output language: {language}
+Complexity: {complexity}
+
+Verified topic input:
+{topic_json}
+
+Please do the following:
+1. Turn selected_topic into a structured automation task with user_role, main_task, sub_questions, multimodal_requirements, and citations.
+2. Match sub-question count to complexity: low=3, medium=4, high=5.
+3. Use google_search and scrape_website to verify entities, policies, papers, and data sources.
+4. Use google_image_search and visual_question_answering to find at least one real accessible image that is directly useful to the task, and include the image link plus a verification note.
+5. Provide at least one reproducible chart requirement with data_source, source_page, and reproducibility_note.
+
+Hard requirements:
+- The user role must be specific to an institution or job function.
+- Sub-questions must be related rather than generic.
+- Every citation and multimodal link must be verifiable.
+- Output JSON only.
+"""
+
+    def _build_refine_review_task_description(
+        self,
+        domain: str,
+        language: str,
+        complexity: str,
+        topic_result: Dict[str, Any],
+        query_result: Dict[str, Any],
+    ) -> str:
+        topic_json = json.dumps(topic_result, ensure_ascii=False, indent=2)
+        query_json = json.dumps(query_result, ensure_ascii=False, indent=2)
+        return f"""# Refine Inspection Task
+
+Mode: inspect
+Domain: {domain}
+Complexity: {complexity}
+Target output language: {language}
+
+Topic input:
+{topic_json}
+
+Current task:
+{query_json}
+
+Inspect only and do not rewrite the query. You must:
+1. Check whether the user role is explicit.
+2. Check whether the sub-questions are coherent and progressively support the main task.
+3. Check whether citations and data sources prioritize 2021+ material.
+4. Check whether image links are accessible and use visual_question_answering when content verification is needed.
+5. Check whether chart data sources are reproducible and whether a traceable source page is provided.
+
+Output:
+- mode=inspect
+- needs_repair
+- issues
+- quality_checks
+
+Output JSON only.
+"""
+
+    def _build_refine_repair_task_description(
+        self,
+        domain: str,
+        language: str,
+        complexity: str,
+        topic_result: Dict[str, Any],
+        query_result: Dict[str, Any],
+        review_result: Dict[str, Any],
+    ) -> str:
+        topic_json = json.dumps(topic_result, ensure_ascii=False, indent=2)
+        query_json = json.dumps(query_result, ensure_ascii=False, indent=2)
+        review_json = json.dumps(review_result, ensure_ascii=False, indent=2)
+        return f"""# Refine Repair Task
+
+Mode: repair
+Domain: {domain}
+Complexity: {complexity}
+Target output language: {language}
+
+Topic input:
+{topic_json}
+
+Task to repair:
+{query_json}
+
+Inspection result:
+{review_json}
+
+Repair the task using the issues and quality_checks above. When needed, use google_search, scrape_website, google_image_search, and visual_question_answering again to replace or complete the evidence and multimodal links.
+
+Repair requirements:
+1. Do not remove valid information; prioritize filling missing evidence.
+2. If an image link is invalid, replace it with a new accessible image.
+3. If a chart source is not reproducible, add source_page, data_source, and reproducibility_note.
+4. When returning repaired_query, preserve the structural fields: user_role, main_task, sub_questions, multimodal_requirements, citations.
+
+Output JSON only.
+"""
+
+    def _merge_topic_citations(
+        self, query_result: Dict[str, Any], topic_result: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        merged = dict(query_result)
+        citations = merged.get("citations", [])
+        if not isinstance(citations, list):
+            citations = []
+
+        seen_urls = {
+            item.get("url")
+            for item in citations
+            if isinstance(item, dict) and item.get("url")
+        }
+        for index, url in enumerate(
+            topic_result.get("selected_topic", {}).get("source_links", []), start=1
+        ):
+            if url and url not in seen_urls:
+                citations.append({"label": f"topic_source_{index}", "url": url})
+                seen_urls.add(url)
+
+        merged["citations"] = citations
+        return merged
+
+    def _finalize_automation_task(
+        self,
+        query_result: Dict[str, Any],
+        topic_result: Dict[str, Any],
+        review_result: Dict[str, Any],
+        repair_notes: List[str],
+        deterministic_checks: Optional[Dict[str, bool]] = None,
+    ) -> Dict[str, Any]:
+        final_task = self._merge_topic_citations(query_result, topic_result)
+        review_checks = review_result.get("quality_checks", {})
+        if not isinstance(review_checks, dict):
+            review_checks = {}
+        inferred_checks = infer_quality_checks(final_task)
+        deterministic_checks = deterministic_checks or {}
+
+        quality_checks = {
+            "role_clear": inferred_checks["role_clear"],
+            "sub_questions_coherent": inferred_checks["sub_questions_coherent"],
+            "timely_sources": self._resolve_timely_sources(
+                task=final_task,
+                topic_result=topic_result,
+                review_checks=review_checks,
+                inferred_checks=inferred_checks,
+            ),
+            "image_accessible": bool(
+                deterministic_checks.get(
+                    "image_accessible", review_checks.get("image_accessible", False)
+                )
+            ),
+            "chart_reproducible": bool(
+                deterministic_checks.get(
+                    "chart_reproducible",
+                    review_checks.get("chart_reproducible", False),
+                )
+            ),
+        }
+
+        final_task["quality_checks"] = quality_checks
+        if repair_notes:
+            final_task["repair_notes"] = list(dict.fromkeys(repair_notes))
+
+        unresolved_issues = self._filter_unresolved_validation_issues(
+            issues=review_result.get("issues", []),
+            quality_checks=quality_checks,
+        )
+        if unresolved_issues:
+            final_task["validation_issues"] = unresolved_issues
+
+        final_task["query"] = synthesize_query_description(
+            task=final_task,
+            language=self.task_lang,
+            freshness_window=topic_result.get("selected_topic", {}).get(
+                "freshness_window", ""
+            ),
+        )
+        return final_task
+
+    def _resolve_timely_sources(
+        self,
+        task: Dict[str, Any],
+        topic_result: Dict[str, Any],
+        review_checks: Dict[str, Any],
+        inferred_checks: Dict[str, bool],
+    ) -> bool:
+        if bool(review_checks.get("timely_sources")):
+            return True
+        if inferred_checks.get("timely_sources"):
+            return True
+
+        selected_topic = topic_result.get("selected_topic", {})
+        if not isinstance(selected_topic, dict):
+            selected_topic = {}
+        freshness_window = str(selected_topic.get("freshness_window", "")).strip()
+        if not freshness_window:
+            return False
+
+        has_recent_window = self._freshness_window_is_recent(freshness_window)
+        if not has_recent_window:
+            return False
+
+        citations = task.get("citations", [])
+        if not isinstance(citations, list):
+            citations = []
+        if citations:
+            return True
+
+        return bool(selected_topic.get("source_links"))
+
+    def _freshness_window_is_recent(self, freshness_window: str) -> bool:
+        years = [int(year) for year in re.findall(r"20\d{2}", freshness_window)]
+        if years and max(years) >= 2021:
+            return True
+
+        lowered = freshness_window.lower()
+        recent_markers = (
+            "recent",
+            "latest",
+            "past 2",
+            "past 3",
+            "last 2",
+            "last 3",
+            "近2年",
+            "近3年",
+            "近两年",
+            "近三年",
+        )
+        return any(marker in lowered for marker in recent_markers)
+
+    async def _stabilize_automation_query(
+        self,
+        query_result: Dict[str, Any],
+        topic_result: Dict[str, Any],
+    ) -> Tuple[Dict[str, Any], Dict[str, bool], List[str]]:
+        stabilized = deepcopy(query_result)
+        notes: List[str] = []
+        checks = {
+            "image_accessible": False,
+            "chart_reproducible": False,
+        }
+
+        for item in stabilized.get("multimodal_requirements", []):
+            if not isinstance(item, dict):
+                continue
+            item_type = item.get("type")
+            if item_type == "image":
+                verified, note = await self._stabilize_image_requirement(
+                    requirement=item,
+                    topic_result=topic_result,
+                    query_result=stabilized,
+                )
+                checks["image_accessible"] = checks["image_accessible"] or verified
+                if note:
+                    notes.append(note)
+            elif item_type == "chart":
+                verified, note = await self._stabilize_chart_requirement(
+                    requirement=item,
+                    topic_result=topic_result,
+                    query_result=stabilized,
+                )
+                checks["chart_reproducible"] = checks["chart_reproducible"] or verified
+                if note:
+                    notes.append(note)
+
+        return stabilized, checks, notes
+
+    async def _stabilize_image_requirement(
+        self,
+        requirement: Dict[str, Any],
+        topic_result: Dict[str, Any],
+        query_result: Dict[str, Any],
+    ) -> Tuple[bool, Optional[str]]:
+        current_source = str(requirement.get("source", "")).strip()
+        description = str(requirement.get("description", "")).strip()
+
+        if self._is_accessible_url(current_source, require_image=True):
+            requirement["verification"] = "Validated by direct HTTP accessibility check."
+            return True, None
+
+        candidate = await self._search_accessible_image_candidate(
+            description=description,
+            topic_text=query_result.get("main_task") or topic_result["selected_topic"]["topic"],
+        )
+        if not candidate:
+            requirement["verification"] = "No publicly accessible direct image URL could be validated automatically."
+            return False, None
+
+        requirement["source"] = candidate["image_url"]
+        requirement["source_page"] = candidate.get("source_page", "")
+        requirement["verification"] = candidate["verification"]
+        self._append_citation_if_missing(
+            query_result,
+            label="image_source",
+            url=candidate.get("source_page") or candidate["image_url"],
+        )
+        return True, "Replaced the image link with a publicly accessible direct image URL verified by code."
+
+    async def _stabilize_chart_requirement(
+        self,
+        requirement: Dict[str, Any],
+        topic_result: Dict[str, Any],
+        query_result: Dict[str, Any],
+    ) -> Tuple[bool, Optional[str]]:
+        data_source = str(requirement.get("data_source", "")).strip()
+        source_page = str(requirement.get("source_page", "")).strip()
+        reproducibility_note = str(requirement.get("reproducibility_note", "")).strip()
+
+        if (
+            self._is_accessible_url(data_source, require_image=False)
+            and source_page
+            and reproducibility_note
+        ):
+            return True, None
+
+        candidate = await self._search_accessible_chart_source(
+            description=str(requirement.get("description", "")).strip(),
+            topic_text=query_result.get("main_task") or topic_result["selected_topic"]["topic"],
+        )
+        if not candidate:
+            return False, None
+
+        requirement["data_source"] = candidate["url"]
+        requirement["source_page"] = candidate["title"]
+        requirement["reproducibility_note"] = (
+            f"Use the public source page '{candidate['title']}' and extract the quantitative values described there to rebuild the chart."
+        )
+        self._append_citation_if_missing(
+            query_result,
+            label="chart_source",
+            url=candidate["url"],
+        )
+        return True, "Replaced the chart source with a publicly accessible source page and regenerated the reproducibility note."
+
+    async def _search_accessible_image_candidate(
+        self, description: str, topic_text: str
+    ) -> Optional[Dict[str, str]]:
+        locale = self._get_search_locale()
+        query = f"{topic_text} {description}".strip()
+        raw_result = await self._execute_support_tool(
+            server_name="tool-image-search",
+            tool_name="google_image_search",
+            arguments={
+                "q": query,
+                "gl": locale["gl"],
+                "hl": locale["hl"],
+                "num": 8,
+                "tbs": "qdr:y",
+            },
+        )
+        if not raw_result:
+            return None
+
+        try:
+            payload = json.loads(raw_result)
+        except Exception:
+            return None
+
+        for item in payload.get("images", []):
+            if not isinstance(item, dict):
+                continue
+            image_url = str(item.get("imageUrl", "")).strip()
+            if not self._is_accessible_url(image_url, require_image=True):
+                continue
+            if not await self._verify_image_matches_description(image_url, description):
+                continue
+            return {
+                "image_url": image_url,
+                "source_page": str(item.get("link", "")).strip(),
+                "verification": "Validated by direct HTTP accessibility check and VQA content check.",
+            }
+        return None
+
+    async def _search_accessible_chart_source(
+        self, description: str, topic_text: str
+    ) -> Optional[Dict[str, str]]:
+        locale = self._get_search_locale()
+        query = f"{topic_text} {description} report data"
+        raw_result = await self._execute_support_tool(
+            server_name="tool-google-search",
+            tool_name="google_search",
+            arguments={
+                "q": query,
+                "gl": locale["gl"],
+                "hl": locale["hl"],
+                "num": 8,
+                "tbs": "qdr:y",
+            },
+        )
+        if not raw_result:
+            return None
+
+        try:
+            payload = json.loads(raw_result)
+        except Exception:
+            return None
+
+        for item in payload.get("organic", []):
+            if not isinstance(item, dict):
+                continue
+            link = str(item.get("link", "")).strip()
+            if not self._is_accessible_url(link, require_image=False):
+                continue
+            title = str(item.get("title", "")).strip() or link
+            return {"url": link, "title": title}
+        return None
+
+    async def _verify_image_matches_description(
+        self, image_url: str, description: str
+    ) -> bool:
+        question = (
+            "Answer yes or no first. Does this image match the following description: "
+            f"{description}?"
+        )
+        raw_result = await self._execute_support_tool(
+            server_name="tool-vqa",
+            tool_name="visual_question_answering",
+            arguments={"image_url": image_url, "question": question},
+        )
+        if not raw_result:
+            return True
+        normalized = raw_result.strip().lower()
+        if normalized.startswith("yes") or normalized.startswith("是"):
+            return True
+        if normalized.startswith("no") or normalized.startswith("否"):
+            return False
+        return True
+
+    async def _execute_support_tool(
+        self, server_name: str, tool_name: str, arguments: Dict[str, Any]
+    ) -> Optional[str]:
+        manager_name = None
+        for candidate in ("agent-refiner", "agent-query-builder", "agent-topic-generator"):
+            if candidate in self.sub_agent_tool_managers:
+                manager_name = candidate
+                break
+
+        if not manager_name:
+            return None
+
+        try:
+            result = await self.sub_agent_tool_managers[manager_name].execute_tool_call(
+                server_name, tool_name, arguments
+            )
+        except Exception as exc:
+            self.task_log.log_step(
+                "warning",
+                "Automation Workflow | Support Tool",
+                f"{tool_name} on {server_name} failed during deterministic validation: {exc}",
+            )
+            return None
+
+        if not isinstance(result, dict):
+            return None
+        if result.get("error"):
+            self.task_log.log_step(
+                "warning",
+                "Automation Workflow | Support Tool",
+                f"{tool_name} on {server_name} returned error: {result['error']}",
+            )
+            return None
+
+        payload = result.get("result")
+        if not isinstance(payload, str):
+            return None
+        if payload.startswith("[ERROR]") or payload.startswith("Unknown tool:"):
+            return None
+        return payload
+
+    def _get_search_locale(self) -> Dict[str, str]:
+        if self.task_lang == "zh":
+            return {"gl": "cn", "hl": "zh-cn"}
+        return {"gl": "us", "hl": "en"}
+
+    def _is_accessible_url(self, url: str, require_image: bool) -> bool:
+        if not url.startswith(("http://", "https://")):
+            return False
+
+        headers = {"User-Agent": "Mozilla/5.0 TVIR/1.0"}
+        try:
+            response = requests.get(
+                url,
+                headers=headers,
+                timeout=20,
+                allow_redirects=True,
+                stream=True,
+            )
+        except Exception:
+            return False
+
+        if response.status_code >= 400:
+            return False
+
+        content_type = (response.headers.get("content-type") or "").lower()
+        if require_image:
+            return content_type.startswith("image/")
+        return content_type.startswith("text/") or "json" in content_type or "pdf" in content_type
+
+    def _append_citation_if_missing(
+        self, query_result: Dict[str, Any], label: str, url: str
+    ) -> None:
+        if not url:
+            return
+        citations = query_result.setdefault("citations", [])
+        if not isinstance(citations, list):
+            query_result["citations"] = citations = []
+        if any(isinstance(item, dict) and item.get("url") == url for item in citations):
+            return
+        citations.append({"label": label, "url": url})
+
+    def _filter_unresolved_validation_issues(
+        self, issues: Any, quality_checks: Dict[str, bool]
+    ) -> List[str]:
+        if not isinstance(issues, list):
+            return []
+        filtered = []
+        for issue in issues:
+            text = str(issue)
+            lowered = text.lower()
+            if "image_accessible" in lowered or "image" in lowered:
+                if quality_checks.get("image_accessible"):
+                    continue
+            if "chart_reproducible" in lowered or "chart" in lowered:
+                if quality_checks.get("chart_reproducible"):
+                    continue
+            filtered.append(text)
+        return filtered
 
     async def run_report_workflow(self, task_description: str) -> str:
         """High-level multi-stage report workflow with charts support.

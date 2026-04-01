@@ -1,0 +1,39 @@
+{
+  "mode": "repair",
+  "repaired_query": {
+    "user_role": "能源管理系统开发工程师",
+    "main_task": "设计和实施基于区块链的分布式能源资源管理系统，以提高能源交易的透明度和效率。",
+    "sub_questions": [
+      "如何利用区块链技术提高分布式能源交易的透明度？",
+      "在分布式能源管理中，区块链如何简化数据处理流程？",
+      "有哪些成功的区块链应用案例可以借鉴以优化能源管理系统？"
+    ],
+    "multimodal_requirements": [
+      {
+        "type": "image",
+        "description": "展示区块链在能源管理中的应用示意图。",
+        "source": "https://www.blockchain-energy-management.com"
+      },
+      {
+        "type": "chart",
+        "description": "显示区块链技术在分布式能源管理中提高效率的统计数据。",
+        "source_page": "Efficiency Improvement Section",
+        "data_source": "https://www.nature.com/articles/s41560-020-0586-4",
+        "reproducibility_note": "数据可从Nature网站的相关章节中获取，并通过图表工具进行再现。"
+      }
+    ],
+    "citations": [
+      {
+        "label": "reference",
+        "url": "https://www.blockchain-energy-management.com"
+      },
+      {
+        "label": "reference",
+        "url": "https://www.nature.com/articles/s41560-020-0586-4"
+      }
+    ]
+  },
+  "repair_notes": [
+    "The image link 'https://www.blockchain-energy-management.com' needs verification for accessibility. The chart data source 'https://www.nature.com/articles/s41560-020-0586-4' needs verification for reproducibility. Proceeding to verify and replace if necessary."
+  ]
+}

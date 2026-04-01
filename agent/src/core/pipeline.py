@@ -1,9 +1,7 @@
 # Copyright (c) 2025 MiroMind
 # This source code is licensed under the MIT License.
 
-
 import traceback
-import uuid
 from typing import Any, Dict, List, Optional
 
 from miroflow_tools.manager import ToolManager
@@ -25,8 +23,7 @@ from .orchestrator import Orchestrator
 async def execute_task_pipeline(
     cfg: DictConfig,
     task_id: str,
-    task_description: str,
-    task_file_name: str,
+    task_input: Dict[str, Any],
     main_agent_tool_manager: ToolManager,
     sub_agent_tool_managers: List[Dict[str, ToolManager]],
     output_formatter: OutputFormatter,
@@ -37,13 +34,12 @@ async def execute_task_pipeline(
     sub_agent_tool_definitions: Optional[Dict[str, List[Dict[str, Any]]]] = None,
 ):
     """
-    Executes the full pipeline for a single task.
+    Executes the full automation-task pipeline for a single task.
 
     Args:
         cfg: The Hydra configuration object.
-        task_description: The description of the task for the LLM.
-        task_file_name: The path to an associated file (optional).
         task_id: A unique identifier for this task run (used for logging).
+        task_input: Structured pipeline input containing domain/language/complexity.
         main_agent_tool_manager: An initialized main agent ToolManager instance.
         sub_agent_tool_managers: A dictionary of initialized sub-agent ToolManager instances.
         output_formatter: An initialized OutputFormatter instance.
@@ -53,17 +49,14 @@ async def execute_task_pipeline(
         tool_definitions: The definitions of the tools for the main agent (optional).
         sub_agent_tool_definitions: The definitions of the tools for the sub-agents (optional).
     Returns:
-        A tuple containing:
-        - A string with the final execution log and summary, or an error message.
-        - The final boxed answer.
-        - The path to the log file.
+        A tuple of (result, log_file_path).
     """
     # Create task log
     task_log = TaskLog(
         log_dir=log_dir,
         task_id=task_id,
         start_time=get_utc_plus_8_time(),
-        input={"task_description": task_description, "task_file_name": task_file_name},
+        input=task_input,
         env_info=get_env_info(cfg),
         ground_truth=ground_truth,
     )
@@ -105,11 +98,12 @@ async def execute_task_pipeline(
         #     task_file_name=task_file_name,
         #     task_id=task_id,
         # )
-        final_summary = ""
         final_boxed_answer = ""
 
-        final_report = await orchestrator.run_report_workflow(
-            task_description=task_description
+        final_result = await orchestrator.run_automated_pipeline(
+            domain=task_input["domain"],
+            language=task_input["language"],
+            complexity=task_input["complexity"],
         )
 
         llm_client.close()
@@ -118,7 +112,7 @@ async def execute_task_pipeline(
         task_log.status = "success"
 
         log_file_path = task_log.save()
-        return final_summary, final_boxed_answer, log_file_path
+        return final_result, log_file_path
 
     except Exception as e:
         error_details = traceback.format_exc()
@@ -131,8 +125,7 @@ async def execute_task_pipeline(
 
         error_message = (
             f"Error executing task {task_id}:\n"
-            f"Description: {task_description}\n"
-            f"File: {task_file_name}\n"
+            f"Input: {task_input}\n"
             f"Error Type: {type(e).__name__}\n"
             f"Error Details:\n{error_details}"
         )
@@ -142,7 +135,7 @@ async def execute_task_pipeline(
 
         log_file_path = task_log.save()
 
-        return error_message, "", log_file_path
+        return {"error": error_message}, log_file_path
 
     finally:
         task_log.end_time = get_utc_plus_8_time()

@@ -1,0 +1,33 @@
+{
+  "user_role": "环境能源领域机构负责人",
+  "main_task": "环境能源领域近三年前沿趋势研究",
+  "sub_questions": [
+    "补充分析与“环境能源领域近三年前沿趋势研究”直接相关的关键问题 1",
+    "补充分析与“环境能源领域近三年前沿趋势研究”直接相关的关键问题 2",
+    "补充分析与“环境能源领域近三年前沿趋势研究”直接相关的关键问题 3"
+  ],
+  "multimodal_requirements": [
+    {
+      "type": "image",
+      "description": "环境能源领域近三年前沿趋势研究相关结构示意图"
+    },
+    {
+      "type": "chart",
+      "description": "环境能源领域近三年前沿趋势研究关键指标对比图"
+    }
+  ],
+  "citations": [],
+  "quality_checks": {
+    "role_clear": true,
+    "sub_questions_coherent": true,
+    "timely_sources": false,
+    "image_accessible": false,
+    "chart_reproducible": false
+  },
+  "repair_notes": [
+    "Repair fallback used because refine repair failed: [WinError 5] 拒绝访问。: '..\\\\logs'"
+  ],
+  "validation_issues": [
+    "Fallback inspection used because refine inspection failed: [WinError 5] 拒绝访问。: '..\\\\logs'"
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "mode": "inspect",
+  "needs_repair": true,
+  "issues": [
+    "Fallback inspection used because refine inspection failed: [WinError 5] 拒绝访问。: '..\\\\logs'"
+  ],
+  "quality_checks": {
+    "role_clear": true,
+    "sub_questions_coherent": true,
+    "timely_sources": false,
+    "image_accessible": false,
+    "chart_reproducible": false
+  }
+}

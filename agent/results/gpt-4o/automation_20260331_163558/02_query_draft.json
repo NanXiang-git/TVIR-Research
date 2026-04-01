@@ -1,0 +1,33 @@
+{
+  "user_role": "能源区块链项目经理",
+  "main_task": "设计和实施基于区块链的分布式能源资源管理系统，以提高管理效率和透明度。",
+  "sub_questions": [
+    "如何利用区块链技术提升分布式能源资源的管理效率？",
+    "哪些区块链平台最适合用于能源交易的自动化和安全性？",
+    "在分布式能源资源管理中，区块链技术如何支持跨学科研究？"
+  ],
+  "multimodal_requirements": [
+    {
+      "type": "image",
+      "description": "区块链在能源管理中的应用示意图",
+      "source": "https://www.blockchain-energy.com/articles/2023/distributed-energy-blockchain"
+    },
+    {
+      "type": "chart",
+      "description": "分布式能源资源区块链管理的效率提升数据",
+      "source_page": "Efficiency Improvement Section",
+      "data_source": "https://www.nature.com/articles/s41560-021-00847-2",
+      "reproducibility_note": "数据来源于经过同行评审的研究，确保可重复性。"
+    }
+  ],
+  "citations": [
+    {
+      "label": "reference",
+      "url": "https://www.blockchain-energy.com/articles/2023/distributed-energy-blockchain"
+    },
+    {
+      "label": "reference",
+      "url": "https://www.nature.com/articles/s41560-021-00847-2"
+    }
+  ]
+}

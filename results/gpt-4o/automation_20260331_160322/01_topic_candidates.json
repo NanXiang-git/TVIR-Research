@@ -1,0 +1,38 @@
+{
+  "domain": "环境能源",
+  "complexity": "low",
+  "candidates": [
+    {
+      "topic": "Automation in Battery Storage System Optimization",
+      "rationale": "The document highlights the significant policy push and market growth in battery storage systems in China since 2021. Automation in optimizing these systems can enhance efficiency and integration with renewable energy sources.",
+      "relevance_score": 8,
+      "source_links": [
+        "https://www.law.berkeley.edu/wp-content/uploads/2025/10/Energy-Storage-Report-Final_ZH-CN-V3-1010版.pdf"
+      ]
+    },
+    {
+      "topic": "AI-Driven Policy Impact Analysis for Renewable Energy",
+      "rationale": "With the rapid policy changes and implementations in the renewable energy sector, AI can be used to analyze the impacts of these policies on market dynamics and technological adoption.",
+      "relevance_score": 7,
+      "source_links": [
+        "https://env.nankai.edu.cn/_upload/article/files/6e/6f/a9429e1b4050a6601087af07fa9b/e80e4489-6f05-42e3-8204-0065716aa229.pdf"
+      ]
+    },
+    {
+      "topic": "Cross-Border Energy Trade Automation Using Blockchain",
+      "rationale": "The global energy market is increasingly interconnected. Blockchain technology can automate and secure cross-border energy transactions, enhancing transparency and efficiency.",
+      "relevance_score": 9,
+      "source_links": [
+        "https://www.belfercenter.org/sites/default/files/2026-01/251230-karplus-chinese-vers3-final.pdf"
+      ]
+    }
+  ],
+  "selected_topic": {
+    "topic": "Cross-Border Energy Trade Automation Using Blockchain",
+    "rationale": "This topic stands out due to its high relevance score and the potential to transform global energy markets by leveraging blockchain technology for secure and efficient transactions. It addresses both technological and policy aspects, making it a comprehensive research subject.",
+    "source_links": [
+      "https://www.belfercenter.org/sites/default/files/2026-01/251230-karplus-chinese-vers3-final.pdf"
+    ],
+    "freshness_window": "2021-2026"
+  }
+}

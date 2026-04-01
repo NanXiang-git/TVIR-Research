@@ -1,0 +1,15 @@
+{
+  "mode": "inspect",
+  "needs_repair": true,
+  "issues": [
+    "The image link 'https://www.blockchain-energy-management.com' needs verification for accessibility.",
+    "The chart data source 'https://www.nature.com/articles/s41560-020-0586-4' requires verification for reproducibility and traceability to the specific section mentioned."
+  ],
+  "quality_checks": {
+    "role_clear": true,
+    "sub_questions_coherent": true,
+    "timely_sources": true,
+    "image_accessible": false,
+    "chart_reproducible": false
+  }
+}

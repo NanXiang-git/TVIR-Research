@@ -1,0 +1,15 @@
+{
+  "mode": "inspect",
+  "needs_repair": true,
+  "issues": [
+    "{'type': 'image_accessibility', 'description': 'The image link provided needs to be verified for accessibility and content relevance.'}",
+    "{'type': 'chart_reproducibility', 'description': 'The chart data source needs verification to ensure the data is reproducible from the specified source page.'}"
+  ],
+  "quality_checks": {
+    "role_clear": true,
+    "sub_questions_coherent": true,
+    "timely_sources": true,
+    "image_accessible": false,
+    "chart_reproducible": false
+  }
+}

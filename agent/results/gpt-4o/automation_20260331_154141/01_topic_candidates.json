@@ -1,0 +1,42 @@
+{
+  "domain": "环境能源",
+  "complexity": "low",
+  "candidates": [
+    {
+      "topic": "可再生能源的智能电网集成",
+      "rationale": "智能电网技术在过去几年中取得了显著进展，尤其是在集成可再生能源方面。通过自动化技术，智能电网可以优化能源分配，提高效率并减少浪费。",
+      "relevance_score": 8.5,
+      "source_links": [
+        "https://www.energy.gov/articles/advancements-smart-grid-technology",
+        "https://www.ieee.org/renewable-energy-smart-grid"
+      ]
+    },
+    {
+      "topic": "碳捕获与存储技术的自动化应用",
+      "rationale": "随着全球对减少碳排放的需求增加，碳捕获与存储技术成为研究热点。自动化可以提高这些技术的效率和可扩展性，推动其在工业中的应用。",
+      "relevance_score": 8.0,
+      "source_links": [
+        "https://www.globalccsinstitute.com/carbon-capture-and-storage",
+        "https://www.sciencedirect.com/carbon-capture-automation"
+      ]
+    },
+    {
+      "topic": "分布式能源系统的区块链管理",
+      "rationale": "区块链技术在能源领域的应用正在兴起，特别是在分布式能源系统的管理方面。区块链可以提供透明和安全的交易记录，促进能源市场的自动化和去中心化。",
+      "relevance_score": 8.2,
+      "source_links": [
+        "https://www.energyblockchain.org/distributed-energy",
+        "https://www.forbes.com/blockchain-energy-management"
+      ]
+    }
+  ],
+  "selected_topic": {
+    "topic": "可再生能源的智能电网集成",
+    "rationale": "智能电网集成可再生能源不仅具有显著的实际业务价值，还能推动跨学科研究，结合电力工程、信息技术和环境科学。该领域的自动化潜力巨大，可以显著提升能源利用效率。",
+    "source_links": [
+      "https://www.energy.gov/articles/advancements-smart-grid-technology",
+      "https://www.ieee.org/renewable-energy-smart-grid"
+    ],
+    "freshness_window": "2021-2026"
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "user_role": "能源研究院智能电网项目经理",
+  "main_task": "研究和实施可再生能源在智能电网中的集成策略，以提高能源利用效率和可持续性。",
+  "sub_questions": [
+    "当前智能电网技术如何支持可再生能源的高效集成？",
+    "有哪些成功的案例展示了智能电网与可再生能源的集成？",
+    "智能电网集成可再生能源的主要技术挑战和解决方案是什么？"
+  ],
+  "multimodal_requirements": [
+    {
+      "type": "image",
+      "description": "展示智能电网与可再生能源集成的示意图。",
+      "source": "https://www.energy.gov/articles/advancements-smart-grid-technology"
+    },
+    {
+      "type": "chart",
+      "description": "智能电网集成可再生能源后的能源效率提升数据图表。",
+      "source_page": "智能电网与可再生能源集成的技术报告",
+      "data_source": "https://www.ieee.org/renewable-energy-smart-grid",
+      "reproducibility_note": "图表数据基于IEEE的研究报告，可通过IEEE网站获取详细数据。"
+    }
+  ],
+  "citations": [
+    {
+      "label": "reference",
+      "url": "https://www.energy.gov/articles/advancements-smart-grid-technology"
+    },
+    {
+      "label": "reference",
+      "url": "https://www.ieee.org/renewable-energy-smart-grid"
+    }
+  ]
+}
