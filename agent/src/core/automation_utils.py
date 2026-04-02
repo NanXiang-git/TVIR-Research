@@ -196,6 +196,12 @@ def normalize_query_result(
                 "reproducibility_note": "",
             }
         )
+    normalized_multimodal = _ensure_multimodal_coverage(
+        multimodal_requirements=normalized_multimodal,
+        sub_questions=sub_questions,
+        topic_text=topic_text,
+        language=language,
+    )
 
     citations = raw.get("citations", [])
     if isinstance(citations, list):
@@ -319,19 +325,24 @@ def synthesize_query_description(
 
     if language == "zh":
         freshness_phrase = _format_freshness_phrase_zh(freshness_window)
-        question_clause = "；".join(q.rstrip("？?。.") for q in sub_questions if q.strip())
-        question_clause = f"{question_clause}。" if question_clause else ""
-        multimodal_clause = _build_multimodal_clause_zh(multimodal_requirements)
+        topic_phrase = _summarize_main_task_zh(main_task)
+        dimension_clause = _build_dimension_blocks_zh(
+            sub_questions=sub_questions,
+            multimodal_requirements=multimodal_requirements,
+            topic_phrase=topic_phrase,
+        )
 
         parts = [
-            f"本人作为{user_role}，正在围绕“{main_task}”开展一项深度研究任务。",
-            f"请聚焦{freshness_phrase}的最新技术、政策与产业进展，系统回答以下关键问题：{question_clause}"
-            if question_clause
-            else f"请聚焦{freshness_phrase}的最新技术、政策与产业进展，系统梳理该任务的关键事实、趋势与挑战。",
+            f"本人作为{user_role}，正在撰写一份深度研究报告。",
+            (
+                f"请聚焦{freshness_phrase}的最新数据、政策文本与权威文献，围绕{topic_phrase}展开系统性研究，结合多源证据进行批判性分析，重点覆盖以下维度：{dimension_clause}。"
+                if dimension_clause
+                else f"请聚焦{freshness_phrase}的最新数据、政策文本与权威文献，围绕{topic_phrase}系统梳理关键事实、趋势、风险与实施路径。"
+            ),
         ]
-        if multimodal_clause:
-            parts.append(f"研究过程中还需满足以下多模态要求：{multimodal_clause}。")
-        parts.append("请基于可核实来源形成结构化分析，并给出可执行的判断、比较与建议。")
+        parts.append(
+            "请基于可核实来源形成结构化分析，明确关键证据、局限性、优先级排序与后续行动建议。"
+        )
         return "".join(parts)
 
     freshness_phrase = _format_freshness_phrase_en(freshness_window)
@@ -386,10 +397,278 @@ def _build_multimodal_clause_zh(multimodal_requirements: List[Dict[str, Any]]) -
         if item_type == "image":
             clauses.append(f"引用{description}")
         elif item_type == "chart":
-            clauses.append(f"绘制{description}")
+            clauses.append(_render_chart_requirement_zh(description))
         else:
             clauses.append(description)
     return "，并".join(clauses)
+
+
+def _ensure_multimodal_coverage(
+    multimodal_requirements: List[Dict[str, Any]],
+    sub_questions: List[str],
+    topic_text: str,
+    language: str,
+) -> List[Dict[str, Any]]:
+    normalized: List[Dict[str, Any]] = []
+    has_image = False
+    for item in multimodal_requirements:
+        if not isinstance(item, dict):
+            continue
+        cloned = deepcopy(item)
+        description = str(cloned.get("description", "")).strip()
+        if language == "zh" and cloned.get("type") == "chart":
+            description = _normalize_chart_description_zh(description)
+        cloned["description"] = description
+        normalized.append(cloned)
+        if cloned.get("type") == "image":
+            has_image = True
+
+    if not sub_questions:
+        return normalized
+
+    if language == "zh":
+        chart_count = sum(1 for item in normalized if item.get("type") == "chart")
+        for question in sub_questions[chart_count:]:
+            normalized.append(
+                _generate_default_multimodal_requirement(
+                    question=question,
+                    topic_text=topic_text,
+                    language=language,
+                    prefer_image=False,
+                )
+            )
+        if not has_image:
+            normalized.append(
+                _generate_default_multimodal_requirement(
+                    question=sub_questions[0],
+                    topic_text=topic_text,
+                    language=language,
+                    prefer_image=True,
+                )
+            )
+        return normalized
+
+    target_count = max(2, len(sub_questions))
+    question_index = 0
+    while len(normalized) < target_count:
+        default_item = _generate_default_multimodal_requirement(
+            question=sub_questions[question_index % len(sub_questions)],
+            topic_text=topic_text,
+            language=language,
+            prefer_image=not has_image,
+        )
+        normalized.append(default_item)
+        if default_item.get("type") == "image":
+            has_image = True
+        question_index += 1
+
+    return normalized
+
+
+def _generate_default_multimodal_requirement(
+    question: str,
+    topic_text: str,
+    language: str,
+    prefer_image: bool = False,
+) -> Dict[str, Any]:
+    if language != "zh":
+        if prefer_image:
+            return {
+                "type": "image",
+                "description": f"Illustrative diagram for {topic_text}",
+                "verification": "",
+                "source": "",
+            }
+        return {
+            "type": "chart",
+            "description": f"Comparative chart of key metrics for {topic_text}",
+            "data_source": "",
+            "reproducibility_note": "",
+        }
+
+    if prefer_image or _question_prefers_image_zh(question):
+        return {
+            "type": "image",
+            "description": _infer_image_description_zh(question, topic_text),
+            "verification": "",
+            "source": "",
+        }
+    return {
+        "type": "chart",
+        "description": _infer_chart_description_from_question_zh(question, topic_text),
+        "data_source": "",
+        "reproducibility_note": "",
+    }
+
+
+def _question_prefers_image_zh(question: str) -> bool:
+    text = str(question or "")
+    return any(
+        keyword in text
+        for keyword in ("框架", "架构", "机制", "流程", "路径", "系统", "技术演进", "技术进展")
+    )
+
+
+def _infer_image_description_zh(question: str, topic_text: str) -> str:
+    text = str(question or "").strip().rstrip("？?。.；;")
+    if any(keyword in text for keyword in ("流程", "路径")):
+        return f"{text}流程图"
+    if any(keyword in text for keyword in ("框架", "架构", "机制")):
+        return f"{text}架构示意图"
+    if any(keyword in text for keyword in ("技术演进", "演进")):
+        return f"{topic_text}技术演进示意图"
+    return f"{topic_text}关键机制示意图"
+
+
+def _infer_chart_description_from_question_zh(question: str, topic_text: str) -> str:
+    subject = _summarize_question_subject_zh(question) or topic_text
+    chart_type = _infer_chart_type_zh(subject)
+    if chart_type == "表格":
+        return f"{subject}对比表格"
+    return f"{subject}{chart_type}"
+
+
+def _normalize_chart_description_zh(description: str) -> str:
+    text = str(description or "").strip().rstrip("。")
+    if not text:
+        return "关键指标对比柱状图"
+    if any(
+        chart_type in text
+        for chart_type in ("柱状图", "折线图", "雷达图", "饼图", "散点图", "热力图", "流程图", "桑基图", "箱线图", "表格")
+    ):
+        return text
+    return _infer_chart_description_from_question_zh(text, text)
+
+
+def _build_dimension_blocks_zh(
+    sub_questions: List[str],
+    multimodal_requirements: List[Dict[str, Any]],
+    topic_phrase: str,
+) -> str:
+    chart_visuals = _assign_chart_visuals_to_dimensions_zh(
+        sub_questions=sub_questions,
+        multimodal_requirements=multimodal_requirements,
+        topic_phrase=topic_phrase,
+    )
+    image_assignments = _assign_images_to_dimensions_zh(
+        sub_questions=sub_questions,
+        multimodal_requirements=multimodal_requirements,
+    )
+    blocks = []
+    for index, question in enumerate(sub_questions, start=1):
+        detail = _expand_dimension_detail_zh(question, topic_phrase)
+        visual_clauses = []
+        chart_visual = chart_visuals[index - 1] if index - 1 < len(chart_visuals) else {}
+        chart_clause = _render_visual_for_dimension_zh(chart_visual)
+        if chart_clause:
+            visual_clauses.append(chart_clause)
+        image_visual = image_assignments.get(index - 1)
+        image_clause = _render_visual_for_dimension_zh(image_visual)
+        if image_clause:
+            visual_clauses.append(image_clause)
+        block = f"（{index}）{detail}"
+        if visual_clauses:
+            block = f"{block}；" + "；".join(visual_clauses)
+        blocks.append(block)
+    return " ".join(blocks)
+
+
+def _assign_chart_visuals_to_dimensions_zh(
+    sub_questions: List[str],
+    multimodal_requirements: List[Dict[str, Any]],
+    topic_phrase: str,
+) -> List[Dict[str, Any]]:
+    charts = [
+        deepcopy(item)
+        for item in multimodal_requirements
+        if isinstance(item, dict) and item.get("type") == "chart"
+    ]
+
+    assigned: List[Dict[str, Any]] = []
+    for question in sub_questions:
+        if charts:
+            assigned.append(charts.pop(0))
+        else:
+            assigned.append(
+                _generate_default_multimodal_requirement(
+                    question=question,
+                    topic_text=topic_phrase,
+                    language="zh",
+                    prefer_image=False,
+                )
+            )
+    return assigned
+
+
+def _assign_images_to_dimensions_zh(
+    sub_questions: List[str],
+    multimodal_requirements: List[Dict[str, Any]],
+) -> Dict[int, Dict[str, Any]]:
+    images = [
+        deepcopy(item)
+        for item in multimodal_requirements
+        if isinstance(item, dict) and item.get("type") == "image"
+    ]
+    if not images:
+        return {}
+
+    assignments: Dict[int, Dict[str, Any]] = {}
+    preferred_indices = [
+        index
+        for index, question in enumerate(sub_questions)
+        if _question_prefers_image_zh(question)
+    ]
+    fallback_indices = [index for index in range(len(sub_questions)) if index not in preferred_indices]
+
+    for index in preferred_indices + fallback_indices:
+        if not images:
+            break
+        assignments[index] = images.pop(0)
+
+    return assignments
+
+
+def _expand_dimension_detail_zh(question: str, topic_phrase: str) -> str:
+    title = str(question or "").strip().rstrip("？?。.；;")
+    if not title:
+        return f"{topic_phrase}关键议题：梳理核心事实、主要变化与现实约束，比较主要方案差异，并提出可执行判断"
+
+    if any(keyword in title for keyword in ("未来发展趋势", "发展趋势", "趋势", "展望")):
+        return f"{title}：总结当前应用基础与最新进展，分析未来3-5年的演进方向、关键不确定性与规模化前提，并判断潜在机会与约束"
+    if any(keyword in title for keyword in ("框架", "架构", "机制", "技术演进", "技术进展", "底层技术", "模型", "数据分析")):
+        return f"{title}：系统梳理核心技术路线、关键模型与数据流程，分析近三年升级方向、应用边界与部署门槛，并判断后续演进重点"
+    if any(keyword in title for keyword in ("应用", "案例", "场景", "实践", "落地")):
+        return f"{title}：总结典型应用场景与代表性案例，比较落地成效、患者获益、成本投入与可复制性，并识别推广障碍与成功条件"
+    if any(keyword in title for keyword in ("性能", "指标", "效率", "准确率", "召回率", "对比", "成本", "效果", "满意度", "活跃度")):
+        return f"{title}：对比关键性能指标、成本效率与实施效果，解释方案差异来源、适用边界与数据局限，并评估规模化可行性"
+    if any(keyword in title for keyword in ("国际", "跨境", "全球", "海外", "竞争")):
+        return f"{title}：比较主要国家或地区的推进路径、制度设计与竞争格局，评估对本地战略的机遇、挑战与可借鉴经验"
+    if any(keyword in title for keyword in ("风险", "伦理", "隐私", "监管", "治理", "合规")):
+        return f"{title}：识别主要风险、监管约束与治理缺口，评估现有政策工具的有效性、局限性与执行成本，并提出改进路径"
+    if any(keyword in title for keyword in ("未来", "预测", "路径")):
+        return f"{title}：预测未来3-5年的演进方向、关键不确定性与情景分化，比较不同路径成本收益，并提出可执行建议"
+    return f"{title}：明确关键驱动因素、最新进展、现实约束与实施条件，比较主要方案或案例差异，并基于权威证据提出判断"
+
+
+def _render_visual_for_dimension_zh(item: Dict[str, Any]) -> str:
+    if not isinstance(item, dict):
+        return ""
+    item_type = str(item.get("type", "")).strip().lower()
+    description = str(item.get("description", "")).strip().rstrip("。")
+    if not description:
+        return ""
+    if item_type == "image":
+        return _render_image_requirement_zh(description)
+    if item_type == "chart":
+        return _render_chart_requirement_zh(description)
+    return description
+
+
+def _render_image_requirement_zh(description: str) -> str:
+    subject = description
+    if any(keyword in description for keyword in ("示意图", "架构图", "流程图")):
+        return f"引用{description}，直观呈现{_strip_image_suffix_zh(subject)}"
+    return f"引用{description}作为辅助说明"
 
 
 def _build_multimodal_clause_en(multimodal_requirements: List[Dict[str, Any]]) -> str:
@@ -408,3 +687,104 @@ def _build_multimodal_clause_en(multimodal_requirements: List[Dict[str, Any]]) -
         else:
             clauses.append(description)
     return "; ".join(clauses)
+
+
+def _summarize_main_task_zh(main_task: str) -> str:
+    text = str(main_task or "").strip().rstrip("。")
+    if not text:
+        return "该研究主题"
+
+    prefix_patterns = (
+        r"^(设计和实施|设计与实施|设计|实施|分析|研究|评估|构建|搭建|探索|梳理|监测|预测|优化|制定|开发|推进|聚焦|围绕)",
+        r"^(系统梳理|重点研究|深入研究)",
+    )
+    for pattern in prefix_patterns:
+        text = re.sub(pattern, "", text).strip()
+
+    text = re.sub(r"^并", "", text).strip()
+    text = re.sub(r"^(实施|设计与实施|设计和实施)", "", text).strip()
+    text = re.sub(r"[，,]\s*以(提高|提升|支持|促进|实现).*$", "", text).strip()
+    text = re.sub(r"[，,]\s*并.*$", "", text).strip()
+    text = re.sub(r"^(对|针对)", "", text).strip()
+    return text or "该研究主题"
+
+
+def _build_dimension_clause_zh(sub_questions: List[str]) -> str:
+    clauses = []
+    for index, question in enumerate(sub_questions, start=1):
+        cleaned = str(question).strip().rstrip("？?。.；;")
+        if cleaned:
+            clauses.append(f"（{index}）{cleaned}")
+    return "；".join(clauses) + "。" if clauses else ""
+
+
+def _render_chart_requirement_zh(description: str) -> str:
+    chart_type = _infer_chart_type_zh(description)
+    subject = _strip_chart_type_suffix_zh(description)
+    if chart_type == "表格":
+        return f"以表格形式对比{subject}"
+    if chart_type == "流程图":
+        return f"绘制一张流程图，说明{subject}"
+    return f"绘制一张{chart_type}，展示{subject}"
+
+
+def _infer_chart_type_zh(description: str) -> str:
+    text = str(description or "").strip()
+    explicit_types = (
+        "柱状图",
+        "折线图",
+        "雷达图",
+        "饼图",
+        "散点图",
+        "热力图",
+        "流程图",
+        "桑基图",
+        "箱线图",
+        "表格",
+    )
+    for chart_type in explicit_types:
+        if chart_type in text:
+            return chart_type
+
+    if any(keyword in text for keyword in ("效能维度", "能力维度", "多维", "综合表现")):
+        return "雷达图"
+    if any(keyword in text for keyword in ("趋势", "变化", "演进", "增长", "下降", "时间序列")):
+        return "折线图"
+    if any(keyword in text for keyword in ("对比", "比较", "差异", "统计数据", "排名")):
+        return "柱状图"
+    if any(keyword in text for keyword in ("占比", "比例", "构成", "份额")):
+        return "饼图"
+    if any(keyword in text for keyword in ("路径", "流程", "机制")):
+        return "流程图"
+    if any(keyword in text for keyword in ("指标", "矩阵", "清单")):
+        return "表格"
+    return "柱状图"
+
+
+def _strip_chart_type_suffix_zh(description: str) -> str:
+    text = str(description or "").strip().rstrip("。")
+    text = re.sub(
+        r"(的)?(柱状图|折线图|雷达图|饼图|散点图|热力图|流程图|桑基图|箱线图|表格)$",
+        "",
+        text,
+    ).strip()
+    if text.startswith("展示"):
+        text = text[2:].strip()
+    if text.startswith("显示"):
+        text = text[2:].strip()
+    if text.startswith("呈现"):
+        text = text[2:].strip()
+    return text or description.strip().rstrip("。")
+
+
+def _summarize_question_subject_zh(question: str) -> str:
+    text = str(question or "").strip().rstrip("？?。.；;")
+    text = re.sub(r"^(系统梳理|重点分析|分析|评估|预测|比较|总结|识别|研究|说明|探讨|明确)", "", text).strip()
+    text = re.sub(r"^(如何|哪些|什么|是否|为何)", "", text).strip()
+    return text or str(question or "").strip().rstrip("？?。.；;")
+
+
+def _strip_image_suffix_zh(description: str) -> str:
+    text = str(description or "").strip().rstrip("。")
+    text = re.sub(r"(示意图|架构图|流程图)$", "", text).strip()
+    return text or description.strip().rstrip("。")

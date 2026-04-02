@@ -1,0 +1,16 @@
+{
+  "mode": "inspect",
+  "needs_repair": true,
+  "issues": [
+    "Image link verification needed for AI在个性化医疗中的应用示意图.",
+    "Chart data sources need verification for reproducibility.",
+    "Sub-questions could be expanded to include more dimensions such as ethical considerations and patient feedback mechanisms."
+  ],
+  "quality_checks": {
+    "role_clear": true,
+    "sub_questions_coherent": true,
+    "timely_sources": true,
+    "image_accessible": false,
+    "chart_reproducible": false
+  }
+}

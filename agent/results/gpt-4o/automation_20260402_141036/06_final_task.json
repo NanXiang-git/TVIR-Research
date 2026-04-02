@@ -1,0 +1,81 @@
+{
+  "user_role": "传统产业AI集成项目经理",
+  "main_task": "研究和推动人工智能在传统行业中的集成应用，以提高效率和创新能力。",
+  "sub_questions": [
+    "分析人工智能在零售、交通和医疗等传统行业中的具体应用案例及其经济影响。",
+    "评估近三年内政府政策对传统行业AI集成的支持力度及其效果。",
+    "探讨AI集成对传统行业工作流程和员工技能需求的变化及其应对策略。"
+  ],
+  "multimodal_requirements": [
+    {
+      "type": "image",
+      "description": "展示AI在传统行业应用的实际案例图片",
+      "source": "https://www.smartcity.team/wp-content/uploads/2025/05/84f703133d10159238189db3a9ec4319.png",
+      "verification": "Validated by direct HTTP accessibility check and VQA content check.",
+      "source_page": "https://www.smartcity.team/reports/2b2g-ai-agent-report/"
+    },
+    {
+      "type": "chart",
+      "description": "AI在传统行业中应用的经济影响柱状图",
+      "source_page": "[PDF] 2025年人工智能指数报告",
+      "data_source": "https://pdf.dfcfw.com/pdf/H3_AP202506201694220072_1.pdf?1750413587000.pdf",
+      "reproducibility_note": "Use the public source page '[PDF] 2025年人工智能指数报告' and extract the quantitative values described there to rebuild the chart."
+    },
+    {
+      "type": "chart",
+      "description": "政府政策对AI集成支持力度的时间趋势折线图",
+      "source_page": "2025-2026年全球人工智能产业发展深度研究报告 - UniFuncs",
+      "data_source": "https://unifuncs.com/s/OMHhLUdQ",
+      "reproducibility_note": "Use the public source page '2025-2026年全球人工智能产业发展深度研究报告 - UniFuncs' and extract the quantitative values described there to rebuild the chart."
+    },
+    {
+      "type": "image",
+      "description": "探讨AI集成对传统行业工作流程和员工技能需求的变化及其应对策略流程图",
+      "source": "http://gjs.cass.cn/kydt/kydt_kycg/202504/W020250409541699672839.jpg",
+      "verification": "Validated by direct HTTP accessibility check and VQA content check.",
+      "source_page": "http://gjs.cass.cn/kydt/kydt_kycg/202504/t20250409_5867524.shtml"
+    },
+    {
+      "type": "image",
+      "description": "探讨AI集成对传统行业工作流程和员工技能需求的变化及其应对策略流程图",
+      "verification": "Validated by direct HTTP accessibility check and VQA content check.",
+      "source": "http://gjs.cass.cn/kydt/kydt_kycg/202504/W020250409541699672839.jpg",
+      "source_page": "http://gjs.cass.cn/kydt/kydt_kycg/202504/t20250409_5867524.shtml"
+    }
+  ],
+  "citations": [
+    {
+      "label": "reference",
+      "url": "https://www.nsfc.gov.cn/csc_phone/kqkd29/kjyq1/58252/index.html"
+    },
+    {
+      "label": "image_source",
+      "url": "https://www.smartcity.team/reports/2b2g-ai-agent-report/"
+    },
+    {
+      "label": "chart_source",
+      "url": "https://pdf.dfcfw.com/pdf/H3_AP202506201694220072_1.pdf?1750413587000.pdf"
+    },
+    {
+      "label": "chart_source",
+      "url": "https://unifuncs.com/s/OMHhLUdQ"
+    },
+    {
+      "label": "image_source",
+      "url": "http://gjs.cass.cn/kydt/kydt_kycg/202504/t20250409_5867524.shtml"
+    }
+  ],
+  "quality_checks": {
+    "role_clear": true,
+    "sub_questions_coherent": true,
+    "timely_sources": true,
+    "image_accessible": true,
+    "chart_reproducible": true
+  },
+  "repair_notes": [
+    "Replaced the missing image link with a new source that provides a relevant workflow diagram. Ensured all multimodal requirements have valid sources and descriptions.",
+    "Replaced the image link with a publicly accessible direct image URL verified by code.",
+    "Replaced the chart source with a publicly accessible source page and regenerated the reproducibility note."
+  ],
+  "query": "本人作为传统产业AI集成项目经理，正在撰写一份深度研究报告。请聚焦2021-2026年的最新数据、政策文本与权威文献，围绕和推动人工智能在传统行业中的集成应用展开系统性研究，结合多源证据进行批判性分析，重点覆盖以下维度：（1）分析人工智能在零售、交通和医疗等传统行业中的具体应用案例及其经济影响：总结典型应用场景与代表性案例，比较落地成效、患者获益、成本投入与可复制性，并识别推广障碍与成功条件；绘制一张柱状图，展示AI在传统行业中应用的经济影响；引用探讨AI集成对传统行业工作流程和员工技能需求的变化及其应对策略流程图，直观呈现探讨AI集成对传统行业工作流程和员工技能需求的变化及其应对策略 （2）评估近三年内政府政策对传统行业AI集成的支持力度及其效果：对比关键性能指标、成本效率与实施效果，解释方案差异来源、适用边界与数据局限，并评估规模化可行性；绘制一张折线图，展示政府政策对AI集成支持力度的时间趋势；引用探讨AI集成对传统行业工作流程和员工技能需求的变化及其应对策略流程图，直观呈现探讨AI集成对传统行业工作流程和员工技能需求的变化及其应对策略 （3）探讨AI集成对传统行业工作流程和员工技能需求的变化及其应对策略：明确关键驱动因素、最新进展、现实约束与实施条件，比较主要方案或案例差异，并基于权威证据提出判断；引用探讨AI集成对传统行业工作流程和员工技能需求的变化及其应对策略流程图，直观呈现探讨AI集成对传统行业工作流程和员工技能需求的变化及其应对策略；引用展示AI在传统行业应用的实际案例图片作为辅助说明。请基于可核实来源形成结构化分析，明确关键证据、局限性、优先级排序与后续行动建议。"
+}

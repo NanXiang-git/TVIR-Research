@@ -1,0 +1,55 @@
+{
+  "user_role": "医院个性化医疗项目负责人",
+  "main_task": "研究人工智能在个性化医疗中的应用，以提升治疗方案的精准性和患者满意度。",
+  "sub_questions": [
+    "分析人工智能在个性化医疗数据分析中的技术进展及其影响。",
+    "评估人工智能驱动的个性化治疗方案的效果与患者满意度。",
+    "探讨人工智能在个性化医疗中的伦理和隐私保护问题及解决方案。"
+  ],
+  "multimodal_requirements": [
+    {
+      "type": "image",
+      "description": "人工智能在个性化医疗中的应用示意图",
+      "source": "https://image.woshipm.com/2026/03/26/e4c7b84a-28d0-11f1-b2d5-00163e09d72f.jpg",
+      "verification": "Validated by direct HTTP accessibility check and VQA content check.",
+      "reproducibility_note": "图像可通过Nature网站获取并验证其真实性。",
+      "source_page": "https://www.woshipm.com/ai/5799425.html"
+    },
+    {
+      "type": "chart",
+      "description": "人工智能驱动的个性化治疗方案效果评估柱状图",
+      "source_page": "[PDF] 2025年人工智能指数报告",
+      "data_source": "https://pdf.dfcfw.com/pdf/H3_AP202506201694220072_1.pdf?1750413587000.pdf",
+      "reproducibility_note": "Use the public source page '[PDF] 2025年人工智能指数报告' and extract the quantitative values described there to rebuild the chart."
+    },
+    {
+      "type": "chart",
+      "description": "个性化医疗中人工智能技术进展折线图",
+      "source_page": "GitHub - chenin-wang/awesome_ai_paper",
+      "data_source": "https://github.com/chenin-wang/awesome_ai_paper",
+      "reproducibility_note": "Use the public source page 'GitHub - chenin-wang/awesome_ai_paper' and extract the quantitative values described there to rebuild the chart."
+    }
+  ],
+  "citations": [
+    {
+      "label": "reference",
+      "url": "https://www.nature.com/articles/s41746-021-00427-4"
+    },
+    {
+      "label": "reference",
+      "url": "https://www.healthaffairs.org/do/10.1377/hblog20210225.100622/full/"
+    },
+    {
+      "label": "image_source",
+      "url": "https://www.woshipm.com/ai/5799425.html"
+    },
+    {
+      "label": "chart_source",
+      "url": "https://pdf.dfcfw.com/pdf/H3_AP202506201694220072_1.pdf?1750413587000.pdf"
+    },
+    {
+      "label": "chart_source",
+      "url": "https://github.com/chenin-wang/awesome_ai_paper"
+    }
+  ]
+}

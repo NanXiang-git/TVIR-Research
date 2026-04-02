@@ -1,0 +1,15 @@
+{
+  "mode": "inspect",
+  "needs_repair": true,
+  "issues": [
+    "{'type': 'image_accessibility', 'description': 'The image link provided for AI application scenarios in financial risk management needs to be verified for accessibility and content.'}",
+    "{'type': 'chart_reproducibility', 'description': 'The chart data source and source page need to be verified for accessibility and reproducibility.'}"
+  ],
+  "quality_checks": {
+    "role_clear": true,
+    "sub_questions_coherent": true,
+    "timely_sources": true,
+    "image_accessible": false,
+    "chart_reproducible": false
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "domain": "医疗健康",
+  "complexity": "low",
+  "candidates": [
+    {
+      "topic": "远程医疗技术的自动化应用",
+      "rationale": "自2021年以来，远程医疗技术因疫情推动而迅速发展。自动化在预约管理、患者监控和数据分析中的应用可以提高效率和患者体验。",
+      "relevance_score": 8.5,
+      "source_links": [
+        "https://www.healthcareitnews.com/news/telehealth-boom-2021",
+        "https://www.who.int/news-room/fact-sheets/detail/digital-health"
+      ]
+    },
+    {
+      "topic": "人工智能在个性化医疗中的应用",
+      "rationale": "个性化医疗是医疗健康领域的前沿方向，人工智能可以通过分析患者数据提供个性化治疗方案，提升治疗效果。",
+      "relevance_score": 9.0,
+      "source_links": [
+        "https://www.nature.com/articles/s41746-021-00427-4",
+        "https://www.healthaffairs.org/do/10.1377/hblog20210225.100622/full/"
+      ]
+    },
+    {
+      "topic": "医疗数据隐私保护的自动化解决方案",
+      "rationale": "随着医疗数据的数字化，隐私保护成为关键问题。自动化技术可以帮助识别和防止数据泄露，确保合规性。",
+      "relevance_score": 8.0,
+      "source_links": [
+        "https://www.jmir.org/2021/3/e23499/",
+        "https://www.himss.org/resources/privacy-security"
+      ]
+    }
+  ],
+  "selected_topic": {
+    "topic": "人工智能在个性化医疗中的应用",
+    "rationale": "人工智能在个性化医疗中的应用具有显著的研究价值和实际意义。通过自动化分析患者数据，能够提供更精准的治疗方案，提升患者满意度和治疗效果。",
+    "source_links": [
+      "https://www.nature.com/articles/s41746-021-00427-4",
+      "https://www.healthaffairs.org/do/10.1377/hblog20210225.100622/full/"
+    ],
+    "freshness_window": "2021-2023"
+  }
+}

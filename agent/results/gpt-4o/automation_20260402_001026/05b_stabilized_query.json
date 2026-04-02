@@ -1,0 +1,34 @@
+{
+  "user_role": "金融机构风险管理部门负责人",
+  "main_task": "评估人工智能在金融风险管理中的应用潜力和实际效果。",
+  "sub_questions": [
+    "人工智能技术如何提高金融风险预测的准确性？",
+    "在金融风险管理中，人工智能如何帮助降低运营成本？",
+    "有哪些成功应用人工智能进行金融风险管理的案例？"
+  ],
+  "multimodal_requirements": [
+    {
+      "type": "image",
+      "description": "展示人工智能在金融风险管理中的应用场景。",
+      "source": "https://d3lkc3n5th01x7.cloudfront.net/wp-content/uploads/2023/10/11050353/AI-in-risk-management.png",
+      "verification": "Validated by direct HTTP accessibility check."
+    },
+    {
+      "type": "chart",
+      "description": "人工智能技术在金融风险预测中的准确性提升数据。",
+      "source_page": "[PDF] 金融业智能数据脱敏技术研究报告",
+      "data_source": "https://pdf.dfcfw.com/pdf/H3_AP202504151656814072_1.pdf?1744729354000.pdf",
+      "reproducibility_note": "Use the public source page '[PDF] 金融业智能数据脱敏技术研究报告' and extract the quantitative values described there to rebuild the chart."
+    }
+  ],
+  "citations": [
+    {
+      "label": "reference",
+      "url": "https://www.example.com/ai-finance-risk-2023"
+    },
+    {
+      "label": "chart_source",
+      "url": "https://pdf.dfcfw.com/pdf/H3_AP202504151656814072_1.pdf?1744729354000.pdf"
+    }
+  ]
+}

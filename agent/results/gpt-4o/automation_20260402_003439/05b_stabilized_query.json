@@ -1,0 +1,61 @@
+{
+  "user_role": "医院信息技术部门负责人",
+  "main_task": "研究并实施基于AI的个性化医疗解决方案",
+  "sub_questions": [
+    "AI技术在个性化医疗中的应用现状与未来发展趋势",
+    "个性化医疗中AI算法的有效性和准确性评估",
+    "AI驱动的个性化医疗在不同医疗场景中的实际案例分析"
+  ],
+  "multimodal_requirements": [
+    {
+      "type": "image",
+      "description": "AI在个性化医疗中的应用示意图",
+      "source": "https://api.995120.cn/ecgdata/other/2025-11-01/1943520251101212517Kxr0qKjG.png",
+      "verification": "Validated by direct HTTP accessibility check and VQA content check.",
+      "source_page": "https://index.zshipu.com/stock003/post/20251027/一天吃透一条产业链AI医疗附下游应用核心标的/"
+    },
+    {
+      "type": "chart",
+      "description": "个性化医疗中AI算法准确性对比柱状图",
+      "source_page": "[PDF] 2026 年国际人工智能安全报告 - International AI Safety Report",
+      "data_source": "https://internationalaisafetyreport.org/sites/default/files/2026-02/international-ai-safety-report-2026-zh.pdf",
+      "reproducibility_note": "Use the public source page '[PDF] 2026 年国际人工智能安全报告 - International AI Safety Report' and extract the quantitative values described there to rebuild the chart."
+    },
+    {
+      "type": "chart",
+      "description": "AI在个性化医疗中的市场增长趋势折线图",
+      "source_page": "2025-2026年全球人工智能产业发展深度研究报告 - UniFuncs",
+      "data_source": "https://unifuncs.com/s/OMHhLUdQ",
+      "reproducibility_note": "Use the public source page '2025-2026年全球人工智能产业发展深度研究报告 - UniFuncs' and extract the quantitative values described there to rebuild the chart."
+    },
+    {
+      "type": "chart",
+      "description": "AI驱动的个性化医疗在不同医疗场景中的实际案例分析柱状图",
+      "source_page": "[PDF] 2026 年国际人工智能安全报告 - International AI Safety Report",
+      "data_source": "https://internationalaisafetyreport.org/sites/default/files/2026-02/international-ai-safety-report-2026-zh.pdf",
+      "reproducibility_note": "Use the public source page '[PDF] 2026 年国际人工智能安全报告 - International AI Safety Report' and extract the quantitative values described there to rebuild the chart."
+    }
+  ],
+  "citations": [
+    {
+      "label": "reference",
+      "url": "https://example.com/ai-personalized-medicine-2023"
+    },
+    {
+      "label": "reference",
+      "url": "https://example.com/ai-healthcare-2021"
+    },
+    {
+      "label": "image_source",
+      "url": "https://index.zshipu.com/stock003/post/20251027/一天吃透一条产业链AI医疗附下游应用核心标的/"
+    },
+    {
+      "label": "chart_source",
+      "url": "https://internationalaisafetyreport.org/sites/default/files/2026-02/international-ai-safety-report-2026-zh.pdf"
+    },
+    {
+      "label": "chart_source",
+      "url": "https://unifuncs.com/s/OMHhLUdQ"
+    }
+  ]
+}

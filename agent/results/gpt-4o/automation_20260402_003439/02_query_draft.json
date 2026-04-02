@@ -1,0 +1,47 @@
+{
+  "user_role": "医院信息技术部门负责人",
+  "main_task": "研究并实施基于AI的个性化医疗解决方案",
+  "sub_questions": [
+    "AI技术在个性化医疗中的应用现状与未来发展趋势",
+    "个性化医疗中AI算法的有效性和准确性评估",
+    "AI驱动的个性化医疗在不同医疗场景中的实际案例分析"
+  ],
+  "multimodal_requirements": [
+    {
+      "type": "image",
+      "description": "AI在个性化医疗中的应用示意图",
+      "source": "https://example.com/ai-personalized-medicine-2023",
+      "verification": "图像展示了AI如何在个性化医疗中应用的流程图"
+    },
+    {
+      "type": "chart",
+      "description": "个性化医疗中AI算法准确性对比柱状图",
+      "source_page": "AI算法准确性章节",
+      "data_source": "https://example.com/ai-healthcare-2021",
+      "reproducibility_note": "数据来源于2021年后多项研究的对比分析"
+    },
+    {
+      "type": "chart",
+      "description": "AI在个性化医疗中的市场增长趋势折线图",
+      "source_page": "市场分析章节",
+      "data_source": "https://example.com/ai-personalized-medicine-2023",
+      "reproducibility_note": "基于2021-2023年市场数据的分析"
+    },
+    {
+      "type": "chart",
+      "description": "AI驱动的个性化医疗在不同医疗场景中的实际案例分析柱状图",
+      "data_source": "",
+      "reproducibility_note": ""
+    }
+  ],
+  "citations": [
+    {
+      "label": "reference",
+      "url": "https://example.com/ai-personalized-medicine-2023"
+    },
+    {
+      "label": "reference",
+      "url": "https://example.com/ai-healthcare-2021"
+    }
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "user_role": "传统产业AI集成项目经理",
+  "main_task": "研究和推动人工智能在传统行业中的集成应用，以提高效率和创新能力。",
+  "sub_questions": [
+    "分析人工智能在零售、交通和医疗等传统行业中的具体应用案例及其经济影响。",
+    "评估近三年内政府政策对传统行业AI集成的支持力度及其效果。",
+    "探讨AI集成对传统行业工作流程和员工技能需求的变化及其应对策略。"
+  ],
+  "multimodal_requirements": [
+    {
+      "type": "image",
+      "description": "展示AI在传统行业应用的实际案例图片",
+      "source": "https://www.nsfc.gov.cn/csc_phone/kqkd29/kjyq1/58252/index.html",
+      "verification": "该链接提供了关于AI集成的详细案例和图片信息。"
+    },
+    {
+      "type": "chart",
+      "description": "AI在传统行业中应用的经济影响柱状图",
+      "source_page": "https://www.nsfc.gov.cn/csc_phone/kqkd29/kjyq1/58252/index.html",
+      "data_source": "国家自然科学基金委员会报告",
+      "reproducibility_note": "数据可从国家自然科学基金委员会的报告中获取，并通过标准统计软件进行再现。"
+    },
+    {
+      "type": "chart",
+      "description": "政府政策对AI集成支持力度的时间趋势折线图",
+      "source_page": "https://www.nsfc.gov.cn/csc_phone/kqkd29/kjyq1/58252/index.html",
+      "data_source": "政府政策文件和行业报告",
+      "reproducibility_note": "通过分析政策文件和行业报告中的数据，可以再现该图表。"
+    },
+    {
+      "type": "image",
+      "description": "探讨AI集成对传统行业工作流程和员工技能需求的变化及其应对策略流程图",
+      "verification": "",
+      "source": ""
+    }
+  ],
+  "citations": [
+    {
+      "label": "reference",
+      "url": "https://www.nsfc.gov.cn/csc_phone/kqkd29/kjyq1/58252/index.html"
+    }
+  ]
+}

@@ -1,10 +1,7 @@
 {
   "mode": "inspect",
   "needs_repair": true,
-  "issues": [
-    "The image link provided for the flowchart is not verified for accessibility.",
-    "The chart data source mentions a specific page but requires verification for reproducibility."
-  ],
+  "issues": [],
   "quality_checks": {
     "role_clear": true,
     "sub_questions_coherent": true,
