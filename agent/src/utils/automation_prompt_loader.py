@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from functools import lru_cache
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, Iterable
 
 
 AUTOMATION_AGENT_PROMPTS = {
@@ -29,15 +29,38 @@ def _load_prompt_file(agent_type: str) -> Dict[str, Any]:
 
 
 def _resolve_language_block(prompt_data: Dict[str, Any], field: str, language: str) -> str:
-    value = prompt_data[field]
+    value = prompt_data.get(field, "")
     if isinstance(value, dict):
         return value.get(language) or value.get("zh") or next(iter(value.values()))
     return str(value)
 
 
+def _render_prompt_sections(
+    prompt_data: Dict[str, Any], language: str, section_names: Iterable[str]
+) -> str:
+    sections = []
+    for section_name in section_names:
+        text = _resolve_language_block(prompt_data, section_name, language).strip()
+        if text:
+            sections.append(text)
+    return "\n\n".join(sections).strip()
+
+
 def generate_automation_system_prompt(agent_type: str, language: str) -> str:
     prompt_data = _load_prompt_file(agent_type)
-    system_text = _resolve_language_block(prompt_data, "system", language)
+    system_text = _render_prompt_sections(
+        prompt_data,
+        language,
+        (
+            "system",
+            "design_principles",
+            "multimodal_taxonomy",
+            "complexity_policy",
+            "citation_policy",
+            "tool_workflow",
+            "few_shot",
+        ),
+    )
     output_format = _resolve_language_block(prompt_data, "output_format", language)
     return (
         f"{system_text}\n\n"
@@ -45,6 +68,20 @@ def generate_automation_system_prompt(agent_type: str, language: str) -> str:
         f"{output_format}\n\n"
         "Return valid JSON only. Do not wrap the result in Markdown."
     ).strip()
+
+
+def generate_automation_user_guidance(agent_type: str, language: str) -> str:
+    prompt_data = _load_prompt_file(agent_type)
+    return _render_prompt_sections(
+        prompt_data,
+        language,
+        (
+            "user_prompt",
+            "tool_workflow",
+            "complexity_policy",
+            "citation_policy",
+        ),
+    )
 
 
 def generate_automation_summary_prompt(

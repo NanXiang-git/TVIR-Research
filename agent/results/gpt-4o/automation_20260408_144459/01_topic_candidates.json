@@ -1,0 +1,38 @@
+{
+  "domain": "医疗健康",
+  "complexity": "low",
+  "candidates": [
+    {
+      "topic": "互联网医疗的政策与市场发展趋势",
+      "rationale": "互联网医疗近年来在政策支持和技术推动下快速发展，尤其是5G、AI等技术的应用使其从补充选项升级为标配服务。研究这一主题可以深入探讨政策驱动、技术融合和市场扩展的具体路径，适合拆解为政策分析、技术应用案例研究和市场规模预测等任务。",
+      "relevance_score": 9,
+      "source_links": [
+        "https://www.chyxx.com/industry/1249007.html"
+      ]
+    },
+    {
+      "topic": "生物医学新技术的监管与临床转化",
+      "rationale": "2025年出台的《生物医学新技术条例》为生物医学新技术的临床研究与转化应用提供了系统性监管框架。研究这一主题可探讨政策影响、技术创新和伦理问题，适合拆解为法规解读、技术案例分析和伦理风险评估等任务。",
+      "relevance_score": 8,
+      "source_links": [
+        "https://zhuanlan.zhihu.com/p/2008259211004516017"
+      ]
+    },
+    {
+      "topic": "抗衰老技术与市场的融合发展",
+      "rationale": "抗衰老技术结合科学研究和市场需求，正在成为医疗健康领域的重要方向。研究这一主题可聚焦技术创新、市场需求分析和消费者行为研究，适合拆解为技术趋势分析、市场规模预测和用户画像研究等任务。",
+      "relevance_score": 7,
+      "source_links": [
+        "https://assets.kpmg.com/content/dam/kpmgsites/cn/pdf/zh/2025/04/anti-aging-industry-report.pdf.coredownload.inline.pdf"
+      ]
+    }
+  ],
+  "selected_topic": {
+    "topic": "互联网医疗的政策与市场发展趋势",
+    "rationale": "互联网医疗在政策支持和技术融合下快速发展，尤其在中国市场，政策的顶层设计和技术的深度赋能使其成为医疗体系转型的重要方向。研究这一主题不仅具有政策和市场价值，还能通过多维度分析支持后续自动化任务生成，如政策评估、市场预测和技术应用案例分析。",
+    "source_links": [
+      "https://www.chyxx.com/industry/1249007.html"
+    ],
+    "freshness_window": "2021年后"
+  }
+}

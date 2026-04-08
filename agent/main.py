@@ -3,6 +3,7 @@
 import argparse
 import asyncio
 import json
+import os
 from datetime import datetime
 from pathlib import Path
 
@@ -17,6 +18,86 @@ load_dotenv()
 logger = bootstrap_logger()
 
 
+def _strip_optional_quotes(value: str | None) -> str | None:
+    if value is None:
+        return None
+    value = value.strip()
+    if len(value) >= 2 and value[0] == value[-1] and value[0] in {'"', "'"}:
+        return value[1:-1]
+    return value
+
+
+def _env_flag(name: str, default: bool) -> bool:
+    raw = _strip_optional_quotes(os.getenv(name))
+    if raw is None or raw == "":
+        return default
+    return raw.lower() in {"1", "true", "yes", "on"}
+
+
+def _env_int(name: str, default: int) -> int:
+    raw = _strip_optional_quotes(os.getenv(name))
+    if raw is None or raw == "":
+        return default
+    try:
+        return int(raw)
+    except ValueError:
+        return default
+
+
+def apply_env_llm_overrides(cfg: DictConfig) -> DictConfig:
+    llm_provider = (
+        _strip_optional_quotes(os.getenv("LLM_PROVIDER")) or str(cfg.llm.provider)
+    ).lower()
+    llm_model_name = (
+        _strip_optional_quotes(os.getenv("LLM_MODEL_NAME"))
+        or _strip_optional_quotes(os.getenv("OPENAI_MODEL_NAME"))
+        or str(cfg.llm.model_name)
+    )
+
+    cfg.llm.provider = llm_provider
+    cfg.llm.model_name = llm_model_name
+
+    if llm_provider == "anthropic":
+        cfg.llm.api_key = (
+            _strip_optional_quotes(os.getenv("LLM_API_KEY"))
+            or _strip_optional_quotes(os.getenv("ANTHROPIC_API_KEY"))
+            or cfg.llm.get("api_key")
+        )
+        cfg.llm.base_url = (
+            _strip_optional_quotes(os.getenv("LLM_BASE_URL"))
+            or _strip_optional_quotes(os.getenv("ANTHROPIC_BASE_URL"))
+            or cfg.llm.get("base_url")
+        )
+        cfg.llm.stream = False
+        cfg.llm.thinking_enabled = _env_flag(
+            "CLAUDE_THINKING_ENABLED",
+            llm_model_name.startswith("claude-3-7"),
+        )
+        cfg.llm.thinking_budget_tokens = _env_int(
+            "CLAUDE_THINKING_BUDGET", int(cfg.llm.get("thinking_budget_tokens", 2048))
+        )
+    else:
+        cfg.llm.api_key = (
+            _strip_optional_quotes(os.getenv("LLM_API_KEY"))
+            or _strip_optional_quotes(os.getenv("OPENAI_API_KEY"))
+            or cfg.llm.get("api_key")
+        )
+        cfg.llm.base_url = (
+            _strip_optional_quotes(os.getenv("LLM_BASE_URL"))
+            or _strip_optional_quotes(os.getenv("OPENAI_BASE_URL"))
+            or cfg.llm.get("base_url")
+        )
+        cfg.llm.stream = _env_flag("LLM_STREAM", bool(cfg.llm.get("stream", True)))
+        cfg.llm.use_tool_calls = _env_flag(
+            "LLM_USE_TOOL_CALLS", bool(cfg.llm.get("use_tool_calls", True))
+        )
+
+    if cfg.llm.get("base_url") == "":
+        cfg.llm.base_url = None
+
+    return cfg
+
+
 def build_cfg(llm_config: str, agent_config: str) -> DictConfig:
     agent_dir = Path(__file__).resolve().parent
     conf_dir = agent_dir / "conf"
@@ -25,6 +106,7 @@ def build_cfg(llm_config: str, agent_config: str) -> DictConfig:
             config_name="config",
             overrides=[f"llm={llm_config}", f"agent={agent_config}"],
         )
+    cfg = apply_env_llm_overrides(cfg)
     debug_dir = Path(str(cfg.debug_dir))
     if not debug_dir.is_absolute():
         cfg.debug_dir = str((agent_dir / debug_dir).resolve())

@@ -1,0 +1,103 @@
+{
+  "complexity": "low",
+  "user_role": "某大型云服务商AI基础设施采购与供应链经理（负责AI加速卡/整机关键物料谈判、交付周期管理与供应风险评估）",
+  "main_task": "作为AI基础设施采购与供应链经理，我需完成一份“HBM3E/HBM4（2024-2026）供需与先进封装瓶颈：价格走势、产能扩张与供应链风险建模”的研究简报，用于指导2025-2026年AI训练/推理集群的关键物料锁定与议价策略。研究范围与边界：聚焦HBM3E在2025-2026年的主导地位与HBM4在2026年起的导入窗口，兼顾HBM4E对2027年供需与议价的前置影响信号；验证先进封装（尤其CoWoS/SoIC/2.5D/3D堆叠）产能对交付期的约束；仅采用2021年后公开、可核验的一手或权威二手来源（厂商法说/新闻室、主流行业媒体、研究机构），不纳入未经证实的传闻数据与无法追溯的图表。",
+  "sub_questions": [
+    "HBM3E/HBM4供需与价格弹性：基于厂商与机构公开信息，梳理2024-2026年HBM3E主导、HBM4量产启动的节奏，结合2026年需求加速与2027年HBM4E渗透前置信号，形成价格与交付周期的定性弹性判断与对我司备货/谈判窗口的影响评估。",
+    "先进封装产能瓶颈与交付期：验证“TSMC CoWoS在2025年产能翻倍，2026年供需更趋平衡”的管理层口径，评估HBM供给与封装配套协同对整机交付期的共同约束，明确对我司Blackwell/Rubin代GPU或自研ASIC交付窗口的影响点。",
+    "接口与架构演进影响：围绕HBM4 2048-bit接口与HBM4E业界IP实现至16 GT/s的进展，评估对单栈带宽、功耗/热设计与系统板级布局的影响；同时分析C‑HBM4E（逻辑基底定制）对能效、连线长度与供应链协调复杂性的改变及引入条件。"
+  ],
+  "question_details": [],
+  "multimodal_requirements": [
+    {
+      "type": "image",
+      "description": "HBM4E 2.5D/3D封装架构与2048-bit总线示意图（含HBM4E IF与总线宽度标注）",
+      "source": "Rambus 官方博客",
+      "source_page": "https://www.rambus.com/blogs/hbm3-everything-you-need-to-know/",
+      "verification": "经图片搜索定位Rambus来源并使用VQA核验，确认图中含“HBM4E IF”“2048”总线标注，符合HBM4E相关架构示意；来源为厂商技术博客，内容与分析任务直接相关。",
+      "data_source": "图片直链：https://www.rambus.com/wp-content/uploads/2025/10/HBM4E-2-5D_3D-Architecture.png",
+      "reproducibility_note": "如路径变更，可通过Rambus站内搜索“HBM4E Architecture”检索同图；建议截图保留时间戳与页面存档。"
+    },
+    {
+      "type": "chart",
+      "description": "HBM3E/HBM4/HBM4E时间线甘特图（2024-2027：采样/量产/渗透率预测节点）柱状图",
+      "source": "Tom’s Hardware；TrendForce",
+      "source_page": "Tom’s Hardware 路线图；TrendForce 对HBM4E 2027年约40%需求预测",
+      "verification": "已查阅并抓取页面，确认HBM4 2048-bit接口、量产启动窗口与HBM4E在2027年占比约40%的预测；两个来源发布时间与关键信息明确可追溯。",
+      "data_source": [
+        "https://www.tomshardware.com/tech-industry/semiconductors/hbm-roadmaps-for-micron-samsung-and-sk-hynix-to-hbm4-and-beyond",
+        "https://www.trendforce.com/news/2025/11/13/news-hbm4e-seen-hitting-40-of-2027-market-samsung-sk-hynix-reportedly-aim-for-1h26-completion/"
+      ],
+      "reproducibility_note": "将文章明确的时间点作为节点绘制甘特图；后续可按相同来源滚动更新节点与不确定性标注。"
+    },
+    {
+      "type": "chart",
+      "description": "先进封装（CoWoS/SoIC）扩产口径对比表格（声明时间、表述内容、适用年份、对交付期的推断）",
+      "source": "TSMC 2025年Q1法说会实录",
+      "source_page": "https://investor.tsmc.com/chinese/encrypt/files/encrypt_file/reports/2025-04/7630274eecc1197a4e3ea6a415f44a47204fe10a/TSMC%201Q25%20Transcript.pdf",
+      "verification": "已核对PDF内容与时间点，属于公司一手表述；可支撑对封装配套在2025-2026年的供需判断。",
+      "data_source": "C.C. Wei于Q&A中表示：2025年需要将CoWoS产能翻倍且产能满载，2026年供需更趋平衡；法说会PDF文本可直接引用。",
+      "reproducibility_note": "提取原文关键句与页码/段落，整理为对比字段；按季度更新并追加后续法说会口径。"
+    },
+    {
+      "type": "chart",
+      "description": "HBM接口代际能力对比柱状图（单栈峰值带宽/接口宽度/典型容量：HBM3E vs HBM4 vs HBM4E）",
+      "source": "EE Times；Tom’s Hardware",
+      "source_page": "EE Times：Rambus HBM4E控制器（16 GT/s、2048-bit）；Tom’s Hardware：HBM4 2048-bit与层数/容量配置",
+      "verification": "EE Times确认业界已有HBM4E控制器IP实现至16 GT/s、2048-bit；Tom’s Hardware梳理HBM4接口宽度、层数与容量；数据点可相互印证。",
+      "data_source": [
+        "https://www.eetimes.com/rambus-unveils-hbm4e-controller-16-gt-s-2048-bit-interface-enabling-c-hbm4e/",
+        "https://www.tomshardware.com/tech-industry/semiconductors/hbm-roadmaps-for-micron-samsung-and-sk-hynix-to-hbm4-and-beyond"
+      ],
+      "reproducibility_note": "统一口径为“理论峰值指标”，并在图注标明来源与计算假设；如参数更新可按相同来源替换。"
+    }
+  ],
+  "citations": [
+    {
+      "label": "reference",
+      "url": "https://www.trendforce.com/news/2025/11/13/news-hbm4e-seen-hitting-40-of-2027-market-samsung-sk-hynix-reportedly-aim-for-1h26-completion/",
+      "title": "TrendForce：HBM4E 预计在2027年达约40%需求；HBM4E研发最早2026年上半年完成",
+      "used_for": "2027年HBM4E渗透率前置信号与供需分析",
+      "key_finding": "HBM4E或在2027年达到约40%需求；三星与SK hynix目标在2026年上半年完成HBM4E开发。"
+    },
+    {
+      "label": "reference",
+      "url": "https://news.skhynix.com/2026-market-outlook-focus-on-the-hbm-led-memory-supercycle/",
+      "title": "SK hynix 新闻室：2026市场展望——聚焦HBM引领的存储超级周期",
+      "used_for": "2026年HBM3E主流、HBM4逐步提升及价格/供需风险识别",
+      "key_finding": "机构预计2026年HBM市场规模快速扩大，HBM3E仍为主流，HBM4开始增加占比；并提示价格与供给的潜在回调风险。"
+    },
+    {
+      "label": "reference",
+      "url": "https://investor.tsmc.com/chinese/encrypt/files/encrypt_file/reports/2025-04/7630274eecc1197a4e3ea6a415f44a47204fe10a/TSMC%201Q25%20Transcript.pdf",
+      "title": "TSMC 2025年Q1法说会实录",
+      "used_for": "先进封装（CoWoS）产能翻倍与2026年供需更趋平衡的官方口径验证",
+      "key_finding": "管理层表示2025年需将CoWoS产能翻倍且仍满载，预计2026年供需更趋平衡。"
+    },
+    {
+      "label": "reference",
+      "url": "https://www.tomshardware.com/tech-industry/semiconductors/hbm-roadmaps-for-micron-samsung-and-sk-hynix-to-hbm4-and-beyond",
+      "title": "Tom’s Hardware：Micron/Samsung/SK hynix HBM路线图（至HBM4及HBM4E）",
+      "used_for": "HBM4 2048-bit接口、层数/容量配置与时间窗口梳理",
+      "key_finding": "HBM4采用2048-bit接口，支持更高层数与容量；HBM4/HBM4E时间窗口面向2026/2027。"
+    },
+    {
+      "label": "reference",
+      "url": "https://www.eetimes.com/rambus-unveils-hbm4e-controller-16-gt-s-2048-bit-interface-enabling-c-hbm4e/",
+      "title": "EE Times：Rambus 发布HBM4E控制器（16 GT/s、2048-bit；C‑HBM4E生态讨论）",
+      "used_for": "HBM4E速率上限、2048-bit接口与C‑HBM4E实现路径验证",
+      "key_finding": "Rambus HBM4E控制器IP支持至16 GT/s、2048-bit，并讨论C‑HBM4E在功耗与连线长度方面的潜在优势与供应链复杂性。"
+    },
+    {
+      "label": "reference",
+      "url": "https://www.rambus.com/blogs/hbm3-everything-you-need-to-know/",
+      "title": "Rambus 博客：HBM4E 2.5D/3D架构示意（含HBM4E IF、2048-bit走线）",
+      "used_for": "HBM4E架构示意图的多模态素材来源",
+      "key_finding": "图示展示HBM4E接口在2.5D/3D封装架构下与SoC/Interposer的连接与2048-bit走线。"
+    },
+    {
+      "label": "topic_source_4",
+      "url": "https://www.trendforce.com/presscenter/news/20251029-12758.html"
+    }
+  ]
+}

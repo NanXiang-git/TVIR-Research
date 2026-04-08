@@ -1,0 +1,18 @@
+{
+  "mode": "inspect",
+  "needs_repair": true,
+  "issues": [
+    "复杂度不匹配：当前任务标注为low，但内容涉及多行业案例、技术路径、成效评估、政策与治理等多维度，分析深度和多模态需求明显超出low标准，建议调整为medium或精简内容。",
+    "question_details为空，缺少问题级citation，未对每个子问题分配具体引用，无法满足medium及以上复杂度的引用要求。",
+    "第4项chart描述不明确，缺少具体图表类型、数据来源和可复现性说明，存在泛化和不可验证风险。",
+    "部分多模态元素描述虽基本合格，但需进一步核查图片内容与描述完全一致，建议后续用VQA工具验证。",
+    "图表/表格数据源可复现性不足，部分数据源未明确出处，影响真实性和专业性。"
+  ],
+  "quality_checks": {
+    "role_clear": true,
+    "sub_questions_coherent": true,
+    "timely_sources": true,
+    "image_accessible": true,
+    "chart_reproducible": false
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "mode": "inspect",
+  "needs_repair": true,
+  "issues": [
+    "复杂度不匹配：当前任务标记为low复杂度，但任务内容涉及多个分析维度，且需要多模态元素支持，复杂度偏高。",
+    "图片链接待验证：5G技术在互联网医疗中的应用场景图的来源尚未验证，需确认其真实性和匹配度。",
+    "多模态元素用途不明确：市场规模与趋势预测的折线图缺乏明确的数据来源和可复现性说明。",
+    "引用与数据源时效性：引用的主要来源为2021年，应优先使用更新的来源以确保信息的时效性。",
+    "缺少问题级引用：虽然顶层引用存在，但缺乏对每个子问题的具体引用支持。"
+  ],
+  "quality_checks": {
+    "role_clear": true,
+    "sub_questions_coherent": true,
+    "timely_sources": false,
+    "image_accessible": false,
+    "chart_reproducible": false
+  }
+}

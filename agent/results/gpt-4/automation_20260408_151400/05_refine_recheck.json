@@ -1,0 +1,20 @@
+{
+  "mode": "inspect",
+  "needs_repair": true,
+  "issues": [
+    "复杂度不匹配：当前任务标注为low，但实际内容包含多个行业、技术路径、成效评估、政策治理等多维度，已接近medium复杂度，且子问题拆分较细，超出low标准。",
+    "question_details缺失：未提供每个子问题的详细说明或问题级citation，medium/high复杂度要求必须补充问题级引用与关键发现。",
+    "多模态描述部分合格，但部分图表描述过于泛泛，如‘柱状图’未明确具体指标与对比维度，需进一步细化图表类型和数据结构。",
+    "图片用途描述较好，但未实际验证图片内容与任务描述是否一致，需用VQA工具核查图片是否为真实企业级应用流程架构。",
+    "部分图表数据源虽声明可追溯，但未实际验证数据页面是否可访问、数据是否可复现，需用scrape工具核查。",
+    "所有引用均为2021年后来源，时效性合格，但未明确每个引用支撑哪个具体子问题或分析维度，需补充used_for与key_finding的绑定关系。",
+    "多模态元素基本服务于对应研究维度，但部分描述仍有装饰性成分，如‘表格为真实项目成效对比’未说明具体指标，需补充具体指标说明。"
+  ],
+  "quality_checks": {
+    "role_clear": true,
+    "sub_questions_coherent": true,
+    "timely_sources": true,
+    "image_accessible": false,
+    "chart_reproducible": false
+  }
+}

@@ -39,6 +39,7 @@ from ..utils.parsing_utils import extract_llm_response_text
 from ..utils.automation_prompt_loader import (
     generate_automation_summary_prompt,
     generate_automation_system_prompt,
+    generate_automation_user_guidance,
     is_automation_agent,
 )
 from ..utils.prompt_utils import (
@@ -674,12 +675,20 @@ class Orchestrator:
                 if text_response:
                     await self._stream_tool_call("show_text", {"text": text_response})
 
-            else:
-                # LLM call failed, end current turn
-                turn_count -= 1
+            elif tool_calls:
                 self.task_log.log_step(
                     "info",
                     f"{sub_agent_name} | Turn: {turn_count} | LLM Call",
+                    f"Received {len(tool_calls)} tool call(s) without assistant text, continuing to tool execution.",
+                )
+
+            else:
+                # LLM call failed, end current turn
+                current_turn = turn_count
+                turn_count -= 1
+                self.task_log.log_step(
+                    "info",
+                    f"{sub_agent_name} | Turn: {current_turn} | LLM Call",
                     "LLM call failed",
                 )
                 await asyncio.sleep(5)
@@ -1156,6 +1165,19 @@ class Orchestrator:
                 if boxed_content:
                     self.intermediate_boxed_answers.append(boxed_content)
 
+                if should_break:
+                    self.task_log.log_step(
+                        "info",
+                        f"Main Agent | Turn: {turn_count} | LLM Call",
+                        "should break is True, breaking the loop",
+                    )
+                    break
+            elif tool_calls:
+                self.task_log.log_step(
+                    "info",
+                    f"Main Agent | Turn: {turn_count} | LLM Call",
+                    f"Received {len(tool_calls)} tool call(s) without assistant text, continuing to tool execution.",
+                )
                 if should_break:
                     self.task_log.log_step(
                         "info",
@@ -1954,6 +1976,31 @@ class Orchestrator:
     def _build_topic_generation_task_description(
         self, domain: str, complexity: str
     ) -> str:
+        guidance = generate_automation_user_guidance(
+            "agent-topic-generator", self.task_lang
+        )
+        if self.task_lang == "zh":
+            return f"""# 阶段1：Topic 生成
+
+输入领域：{domain}
+任务复杂度：{complexity}
+目标输出语言：{self.task_lang}
+
+请完成以下工作：
+1. 先使用 google_search 搜索近三年的技术、政策、产业、市场与研究动态。
+2. 再使用 scrape_website 核验最重要的来源页面，确认主题不是空泛概念。
+3. 产出 3 个适合自动化任务生成的候选主题，并从中选出一个最优主题。
+4. 每个候选主题都要说明：现实价值、研究价值、前沿性、以及为什么适合后续拆成结构化任务。
+
+附加要求：
+- 优先关注 2021 年后的信息。
+- 候选主题要具体、可继续拆分，不要只是宏观口号。
+- 只输出 JSON，不要输出报告正文。
+
+补充提示：
+{guidance}
+"""
+
         return f"""# Topic Generation Task
 
 Input domain: {domain}
@@ -1964,11 +2011,15 @@ Please do the following:
 1. Use google_search to discover technology, policy, market, and research developments from the last three years.
 2. Use scrape_website to verify the most important candidate evidence.
 3. Produce 3 candidate topics for high-value automation tasks and select the best one.
-4. Explain the practical value, research value, and frontier angle of each topic and attach verifiable source links.
+4. For each topic, explain practical value, research value, frontier angle, and why it can support a downstream structured task.
 
 Notes:
-- Focus on changes from 2021 onward.
-- Do not output a report outline; output JSON only.
+- Prioritize material from 2021 onward.
+- Candidate topics must be concrete enough to be decomposed later.
+- Output JSON only.
+
+Additional guidance:
+{guidance}
 """
 
     def _build_query_construction_task_description(
@@ -1979,6 +2030,42 @@ Notes:
         topic_result: Dict[str, Any],
     ) -> str:
         topic_json = json.dumps(topic_result, ensure_ascii=False, indent=2)
+        guidance = generate_automation_user_guidance("agent-query-builder", language)
+        if language == "zh":
+            return f"""# 阶段2：任务编制
+
+领域：{domain}
+目标输出语言：{language}
+复杂度：{complexity}
+
+已验证主题输入：
+{topic_json}
+
+请把 selected_topic 编写成结构化研究任务，并严格按照以下顺序执行：
+1. 先确定真实用户角色、主任务和研究边界，角色必须具体到机构职责或岗位职责。
+2. 再生成研究维度：
+   - low：只保留一级研究维度，整体篇幅较短。
+   - medium：一级维度 + 二级分析点，长度保持标准。
+   - high：一级维度 + 更丰富的二级分析点、边界条件、风险和政策要求，整体篇幅明显更长。
+3. 使用 google_search 与 scrape_website 验证实体、案例、论文、政策和数据来源。
+4. 为多模态元素建立可验证来源：
+   - 图片必须先用 google_image_search 找候选，再用 visual_question_answering 验证内容匹配度。
+   - 如果图片不可访问、与任务描述不一致或只是装饰性图片，必须循环继续找，直到找到合格图片，或明确报告失败原因。
+   - 图表或表格的数据源也必须经过 search + scrape 验证；如果不可复现，继续更换来源。
+5. 输出任务时，不仅要给出顶层 citations，还要尽量把 citation 绑定到具体问题维度。对于 medium/high，请补充 question_details，并在每个维度下给出 analysis_points 与 citations。
+
+硬性要求：
+- 最终任务必须是研究 brief 风格，不是简单问句堆砌。
+- sub_questions 必须相关联，不得泛化。
+- multimodal_requirements 要尽量覆盖各维度。
+- 所有 chart 类 description 必须明确图表类型。
+- 所有保留的引用、图片、图表来源都必须经过验证。
+- 只输出 JSON。
+
+补充提示：
+{guidance}
+"""
+
         return f"""# Query Construction Task
 
 Domain: {domain}
@@ -1988,18 +2075,30 @@ Complexity: {complexity}
 Verified topic input:
 {topic_json}
 
-Please do the following:
-1. Turn selected_topic into a structured automation task with user_role, main_task, sub_questions, multimodal_requirements, and citations.
-2. Match sub-question count to complexity: low=3, medium=4, high=5.
-3. Use google_search and scrape_website to verify entities, policies, papers, and data sources.
-4. Use google_image_search and visual_question_answering to find at least one real accessible image that is directly useful to the task, and include the image link plus a verification note.
-5. Provide at least one reproducible chart requirement with data_source, source_page, and reproducibility_note.
+Please turn selected_topic into a structured research task and follow this workflow:
+1. Define a realistic user role, main task, and research boundary.
+2. Generate research dimensions according to complexity:
+   - low: top-level dimensions only, shorter output
+   - medium: top-level dimensions plus second-level analytical points
+   - high: richer second-level points, risks, policies, and noticeably longer output
+3. Use google_search and scrape_website to verify entities, policies, papers, cases, and data sources.
+4. For multimodal elements:
+   - use google_image_search first, then visual_question_answering to verify every image candidate
+   - if an image is inaccessible, mismatched, or decorative, keep searching in a loop until a valid one is found or failure is clearly reported
+   - verify chart or table sources with search + scrape and replace weak sources when reproducibility is poor
+5. Provide both top-level citations and, for medium/high, question-level citations inside question_details.
 
 Hard requirements:
 - The user role must be specific to an institution or job function.
+- The task must read like a professional research brief.
 - Sub-questions must be related rather than generic.
-- Every citation and multimodal link must be verifiable.
+- Multimodal requirements should cover the dimensions as much as possible.
+- Every chart description must explicitly name the chart type.
+- Every retained citation and multimodal link must be verifiable.
 - Output JSON only.
+
+Additional guidance:
+{guidance}
 """
 
     def _build_refine_review_task_description(
@@ -2012,6 +2111,46 @@ Hard requirements:
     ) -> str:
         topic_json = json.dumps(topic_result, ensure_ascii=False, indent=2)
         query_json = json.dumps(query_result, ensure_ascii=False, indent=2)
+        guidance = generate_automation_user_guidance("agent-refiner", language)
+        if language == "zh":
+            return f"""# 阶段3a：Refine 检查
+
+模式：inspect
+领域：{domain}
+复杂度：{complexity}
+目标输出语言：{language}
+
+主题输入：
+{topic_json}
+
+当前任务：
+{query_json}
+
+只做检查，不要重写任务正文。请重点检查：
+1. 用户角色是否明确且可信。
+2. 研究维度是否关联、是否支持主任务。
+3. 复杂度是否匹配：
+   - low 是否过长或过细
+   - medium 是否达到标准长度
+   - high 是否有足够丰富的二级分析点
+4. citation 与数据源是否优先使用 2021 年后的来源。
+5. medium/high 是否在 question_details 中提供了问题级 citation。
+6. 图片链接是否可访问，必要时用 visual_question_answering 检查内容是否匹配。
+7. 图表或表格数据源是否可追溯、可复现。
+8. 多模态元素是否真正服务于对应研究维度，而不是装饰。
+
+输出：
+- mode=inspect
+- needs_repair
+- issues
+- quality_checks
+
+补充提示：
+{guidance}
+
+只输出 JSON。
+"""
+
         return f"""# Refine Inspection Task
 
 Mode: inspect
@@ -2025,18 +2164,24 @@ Topic input:
 Current task:
 {query_json}
 
-Inspect only and do not rewrite the query. You must:
-1. Check whether the user role is explicit.
-2. Check whether the sub-questions are coherent and progressively support the main task.
-3. Check whether citations and data sources prioritize 2021+ material.
-4. Check whether image links are accessible and use visual_question_answering when content verification is needed.
-5. Check whether chart data sources are reproducible and whether a traceable source page is provided.
+Inspect only and do not rewrite the task body. Check:
+1. whether the user role is explicit and credible
+2. whether the research dimensions are coherent and support the main task
+3. whether complexity matches the task intensity
+4. whether citations and data sources prioritize post-2021 material
+5. whether medium/high outputs include question-level citations in question_details
+6. whether image links are accessible and content-matched
+7. whether chart or table sources are reproducible
+8. whether multimodal elements truly support the linked research dimensions
 
 Output:
 - mode=inspect
 - needs_repair
 - issues
 - quality_checks
+
+Additional guidance:
+{guidance}
 
 Output JSON only.
 """
@@ -2053,6 +2198,45 @@ Output JSON only.
         topic_json = json.dumps(topic_result, ensure_ascii=False, indent=2)
         query_json = json.dumps(query_result, ensure_ascii=False, indent=2)
         review_json = json.dumps(review_result, ensure_ascii=False, indent=2)
+        guidance = generate_automation_user_guidance("agent-refiner", language)
+        if language == "zh":
+            return f"""# 阶段3b：Refine 修复
+
+模式：repair
+领域：{domain}
+复杂度：{complexity}
+目标输出语言：{language}
+
+主题输入：
+{topic_json}
+
+待修复任务：
+{query_json}
+
+检查结果：
+{review_json}
+
+请根据 issues 和 quality_checks 修复任务，并在必要时重新调用工具。修复顺序要求如下：
+1. 先保留有效信息，不要无故删除已验证内容。
+2. 再补齐复杂度缺口：
+   - low 过长则收敛
+   - medium 不足则补齐标准分析点
+   - high 不够详细则补充 question_details、analysis_points、问题级 citations
+3. 修复引用：
+   - 优先补齐问题级 citation
+   - citation 尽量补 title、url、used_for、key_finding 或 summary
+4. 修复多模态：
+   - 图片必须 search -> image search -> VQA 验证通过后才能保留
+   - 若图片失败，循环继续找，直到合格或明确失败原因
+   - 图表/表格来源若不可复现，必须继续换源
+5. 返回 repaired_query 时，保留结构字段，并尽量保持任务风格一致。
+
+补充提示：
+{guidance}
+
+只输出 JSON。
+"""
+
         return f"""# Refine Repair Task
 
 Mode: repair
@@ -2069,13 +2253,18 @@ Task to repair:
 Inspection result:
 {review_json}
 
-Repair the task using the issues and quality_checks above. When needed, use google_search, scrape_website, google_image_search, and visual_question_answering again to replace or complete the evidence and multimodal links.
+Repair the task using the issues and quality_checks above. Follow this order:
+1. preserve verified information
+2. fix complexity mismatch
+3. repair citation structure, especially question-level citations for medium/high
+4. repair multimodal elements with search, scraping, image search, and VQA
+5. if an image fails validation, keep searching in a loop until it passes or failure is clearly stated
+6. if a chart or table source is not reproducible, replace it rather than keeping a vague note
 
-Repair requirements:
-1. Do not remove valid information; prioritize filling missing evidence.
-2. If an image link is invalid, replace it with a new accessible image.
-3. If a chart source is not reproducible, add source_page, data_source, and reproducibility_note.
-4. When returning repaired_query, preserve the structural fields: user_role, main_task, sub_questions, multimodal_requirements, citations.
+Return repaired_query while preserving the structural fields.
+
+Additional guidance:
+{guidance}
 
 Output JSON only.
 """

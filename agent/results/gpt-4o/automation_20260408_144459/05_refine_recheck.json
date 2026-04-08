@@ -1,0 +1,18 @@
+{
+  "mode": "inspect",
+  "needs_repair": true,
+  "issues": [
+    "用户角色明确且可信，但缺少 citation 和数据源的引用，尤其是 2021 年后的来源。",
+    "研究维度关联性较好，但复杂度为 low，内容过长且过细，不符合 low 的复杂度要求。",
+    "多模态元素描述不够具体，未明确其如何支持研究维度，部分描述如 '结构示意图' 和 '关键指标对比图' 过于泛泛。",
+    "图表数据源和可复现性信息缺失，无法验证其可追溯性和复现性。",
+    "图片链接和内容验证缺失，无法确认其是否符合任务描述。"
+  ],
+  "quality_checks": {
+    "role_clear": true,
+    "sub_questions_coherent": true,
+    "timely_sources": false,
+    "image_accessible": false,
+    "chart_reproducible": false
+  }
+}

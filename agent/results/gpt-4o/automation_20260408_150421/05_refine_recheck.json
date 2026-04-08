@@ -1,0 +1,19 @@
+{
+  "mode": "inspect",
+  "needs_repair": true,
+  "issues": [
+    "图片链接缺失或不可访问，未提供验证信息，特别是结构示意图的来源和验证字段为空。",
+    "部分图表数据源未提供，无法追溯或复现，例如关于市场规模与竞争格局、政策支持与行业发展等图表。",
+    "多模态元素的描述不够明确，未清晰指明如何支持对应研究维度，可能存在装饰性使用。",
+    "复杂度匹配度不足，尽管为 high 复杂度，但部分分析点的深度和二级分析点仍显不足，特别是在风险边界和政策建议方面。",
+    "部分 citation 来源未明确是否为 2021 年后的来源，需验证其时效性。",
+    "未完全覆盖问题级 citation 的要求，部分问题缺乏详细的引用信息，例如国际比较与合作机会部分。"
+  ],
+  "quality_checks": {
+    "role_clear": true,
+    "sub_questions_coherent": true,
+    "timely_sources": false,
+    "image_accessible": false,
+    "chart_reproducible": false
+  }
+}

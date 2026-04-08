@@ -1,0 +1,42 @@
+{
+  "domain": "环境能源",
+  "complexity": "low",
+  "candidates": [
+    {
+      "topic": "可再生能源的智能电网集成",
+      "rationale": "随着可再生能源的普及，智能电网技术的集成成为关键，以提高能源效率和稳定性。自动化任务可以优化电网管理和能源分配。",
+      "relevance_score": 8.5,
+      "source_links": [
+        "https://www.energy.gov/articles/advancements-smart-grid-technologies",
+        "https://www.ieee.org/publications/renewable-energy-smart-grid.html"
+      ]
+    },
+    {
+      "topic": "碳捕获与存储技术的自动化监控",
+      "rationale": "碳捕获与存储技术在减少温室气体排放方面具有重要作用。自动化监控系统可以提高其效率和安全性，推动政策实施。",
+      "relevance_score": 8.0,
+      "source_links": [
+        "https://www.globalccsinstitute.com/resources/reports/carbon-capture-and-storage-monitoring/",
+        "https://www.sciencedirect.com/science/article/pii/S1876610219312345"
+      ]
+    },
+    {
+      "topic": "分布式能源系统的区块链应用",
+      "rationale": "区块链技术在分布式能源交易中提供透明和安全的解决方案。研究跨学科应用可以促进市场创新和政策支持。",
+      "relevance_score": 8.7,
+      "source_links": [
+        "https://www.nature.com/articles/s41560-019-0428-0",
+        "https://www.energycentral.com/c/tt/blockchain-distributed-energy-future"
+      ]
+    }
+  ],
+  "selected_topic": {
+    "topic": "分布式能源系统的区块链应用",
+    "rationale": "区块链技术在分布式能源交易中提供透明和安全的解决方案。研究跨学科应用可以促进市场创新和政策支持。",
+    "source_links": [
+      "https://www.nature.com/articles/s41560-019-0428-0",
+      "https://www.energycentral.com/c/tt/blockchain-distributed-energy-future"
+    ],
+    "freshness_window": "2021-2026"
+  }
+}

@@ -1,15 +1,16 @@
 # conf/llm/default.yaml - Default LLM configuration
 provider: "openai" # openai, anthropic, qwen
-model_name: "gpt-4o"
+model_name: "gpt-5"
 async_client: false
 temperature: 0.3
-top_p: 1.0
+top_p: null
 min_p: 0.0
 top_k: -1
 max_tokens: 4096
-api_key: "sk-1d5bvZ7FBiHekMSUOtbATIVTjkfd7fBQfWnbU1VDxTmsm2ky"
-base_url: http://14.103.68.46/v1
+api_key: ${oc.env:OPENAI_API_KEY}
+base_url: ${oc.env:OPENAI_BASE_URL}
 keep_tool_result: -1
 repetition_penalty: 1.0
 stream: true
-max_context_length: 128000
+use_tool_calls: true
+max_context_length: 200000

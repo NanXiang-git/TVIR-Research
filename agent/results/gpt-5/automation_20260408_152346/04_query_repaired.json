@@ -1,0 +1,69 @@
+{
+  "mode": "repair",
+  "repaired_query": {
+    "complexity": "low",
+    "user_role": "某大型云服务商AI基础设施采购与供应链经理（负责AI加速卡/整机关键物料谈判、交付周期管理与供应风险评估）",
+    "main_task": "完成一页研究简报（1-pager），仅聚焦“先进封装产能瓶颈与交付期”这一维度：基于TSMC等权威一手来源，核实并摘录2025年CoWoS产能翻倍、2026年供需更趋平衡的官方表述，给出对我司2025-2026年Blackwell/Rubin代GPU或自研ASIC交付窗口的简要影响判断与行动建议（例如锁定封装时槽、与供应商协同排产）。仅使用2021年以后可核验来源；不纳入无法追溯的图表或传闻。",
+    "sub_questions": [
+      "先进封装产能瓶颈与交付期：核实“TSMC 2025年需将CoWoS产能翻倍且仍满载，2026年供需更趋平衡”的管理层口径，并用一句话评估对我司2025-2026交付窗口的影响与风险缓释节点。"
+    ],
+    "question_details": [
+      {
+        "question": "验证TSMC对CoWoS扩产与供需判断的官方口径，并提炼对交付窗口的影响。",
+        "steps": [
+          "从TSMC 2025年Q1法说会实录提取原文金句：关于“2025年CoWoS产能翻倍且满载”“2026年更趋平衡”的Q&A答复。",
+          "补充TSMC 2025年股东会资料中对先进封装多地布局的表述，作为辅助佐证（若涉及容量布点）。",
+          "基于上述口径，形成一句话影响判断，例如：“2025年封装位仍为主要约束，应前置锁定；2026年起交付期缓解但仍需跨厂协同”。"
+        ],
+        "deliverable": "1段引文+1段我司影响与行动建议（各不超过120字）",
+        "citations": [
+          {
+            "title": "TSMC 2025年Q1法说会实录",
+            "url": "https://investor.tsmc.com/chinese/encrypt/files/encrypt_file/reports/2025-04/7630274eecc1197a4e3ea6a415f44a47204fe10a/TSMC%201Q25%20Transcript.pdf",
+            "used_for": "CoWoS扩产与供需平衡的官方表述核实",
+            "key_finding": "管理层在Q&A中表示：2025年需将CoWoS产能翻倍且仍满载；并判断2026年供需将更趋平衡。引用位置：Q&A对JPMorgan提问的回答（Gokul Hariharan），含原句“As I said, we have to double our CoWoS capacity… Still fully loaded… I believe that it will be more balanced next year.”"
+          },
+          {
+            "title": "TSMC 2025年股东会资料（议程）",
+            "url": "https://investor.tsmc.com/sites/ir/shareholders-meeting/2025-06-03/2025AGM_Agenda_wmn.pdf",
+            "used_for": "先进封装产能与多地点布局的辅助背景说明",
+            "key_finding": "文件提及公司在多地扩充先进封装能力与设施布局，用于佐证产能扩张方向与规模（作为次要佐证，不直接用于产能倍数判定）。"
+          }
+        ]
+      }
+    ],
+    "multimodal_requirements": [
+      {
+        "type": "chart",
+        "description": "TSMC CoWoS扩产口径对比表（表格）：列出“声明时间/来源、原文摘录、适用年份（2025/2026）、对交付期推断”。",
+        "source": "TSMC 2025年Q1法说会实录；TSMC 2025年股东会资料（辅助）",
+        "source_page": "法说会Q&A中对JPMorgan提问的回答；股东会资料关于先进封装布局段落",
+        "verification": "已抓取并核读TSMC法说会PDF，确认原文包含“double our CoWoS capacity… Still fully loaded… more balanced next year”表述；作为主引。股东会资料用于补充布局背景。",
+        "data_source": [
+          "https://investor.tsmc.com/chinese/encrypt/files/encrypt_file/reports/2025-04/7630274eecc1197a4e3ea6a415f44a47204fe10a/TSMC%201Q25%20Transcript.pdf",
+          "https://investor.tsmc.com/sites/ir/shareholders-meeting/2025-06-03/2025AGM_Agenda_wmn.pdf"
+        ],
+        "reproducibility_note": "表格字段固定为：时间/来源、原文摘录（英文或中译并附简短引用位置说明）、适用年份、交付期推断。法说会引用注明Q&A环节（JPMorgan提问），并保留英文原句以便复核。"
+      }
+    ],
+    "citations": [
+      {
+        "label": "reference",
+        "url": "https://investor.tsmc.com/chinese/encrypt/files/encrypt_file/reports/2025-04/7630274eecc1197a4e3ea6a415f44a47204fe10a/TSMC%201Q25%20Transcript.pdf",
+        "title": "TSMC 2025年Q1法说会实录",
+        "used_for": "先进封装（CoWoS）2025年产能翻倍与2026年供需更趋平衡的官方口径验证",
+        "key_finding": "Q&A原文：“As I said, we have to double our CoWoS capacity… Still fully loaded… I believe that it will be more balanced next year.” 支撑对交付窗口的定性判断。"
+      },
+      {
+        "label": "reference",
+        "url": "https://investor.tsmc.com/sites/ir/shareholders-meeting/2025-06-03/2025AGM_Agenda_wmn.pdf",
+        "title": "TSMC 2025年股东会资料（议程）",
+        "used_for": "作为先进封装扩产与多地布局的背景补充，辅助理解产能扩张路径",
+        "key_finding": "提及公司在多地扩充先进封装相关能力，佐证扩产方向与规划（非倍数/年份主依据）。"
+      }
+    ]
+  },
+  "repair_notes": [
+    "1) 复杂度收敛：原任务为low但包含价格弹性、接口与C‑HBM4E等多维内容。已将范围收敛至单一维度“先进封装产能瓶颈与交付期”，产出限定为一页简报和一张可复现表格，符合low复杂度。2) 问题级引用补齐：为唯一子问题新增问题级citation，并在key_finding中标注TSMC法说会Q&A的英文原句与来源位置，确保可核验。3) 引用字段修复：移除字段不全的引用（原topic_source_4），保留并补充两条一手公司文件（法说会实录、股东会资料），字段齐全。4) 多模态修复：删除与收敛后主题不直接相关的图片与多张图表，仅保留“对比表格”这一明确类型的chart，定义固定字段、数据来源与复现说明，提升可复现性。5) 工具核验：前序阶段已使用抓取工具核读TSMC 1Q25法说会PDF，确认包含“As I said, we have to double our CoWoS capacity… Still fully loaded… I believe that it will be more balanced next year.”；同时定位股东会资料PDF作为辅助背景。曾通过图片搜索与VQA核验Rambus HBM4E示意图包含“HBM4E IF”“2048”标注，但基于复杂度收敛未保留该图片以避免超出low范围。6) 范围调整：鉴于价格序列与接口带宽对比需更多数据搜证，且超出low任务范围，已从本次任务中剔除，以保证专业性、可执行与可验证性。"
+  ]
+}

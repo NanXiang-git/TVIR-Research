@@ -5,6 +5,7 @@ import asyncio
 import dataclasses
 import httpx
 import logging
+from types import SimpleNamespace
 from typing import Any, Dict, List, Tuple, Union
 
 import tiktoken
@@ -28,6 +29,110 @@ import logging
 
 @dataclasses.dataclass
 class OpenAIClient(BaseClient):
+    @staticmethod
+    def _serialize_tool_call(tool_call: Any) -> Dict[str, Any]:
+        """Convert SDK tool call objects into plain dicts for message history."""
+        function = getattr(tool_call, "function", None)
+        return {
+            "id": getattr(tool_call, "id", None),
+            "type": getattr(tool_call, "type", "function"),
+            "function": {
+                "name": getattr(function, "name", None) if function else None,
+                "arguments": (
+                    getattr(function, "arguments", None) if function else None
+                ),
+            },
+        }
+
+    def _build_stream_response(
+        self,
+        content: str,
+        finish_reason: str,
+        usage: Any,
+        tool_calls: List[Any],
+    ):
+        """Build a response-like object from streaming chunks."""
+
+        class StreamResponse:
+            def __init__(self, content, finish_reason, usage, tool_calls):
+                self.choices = [
+                    type(
+                        "obj",
+                        (object,),
+                        {
+                            "message": type(
+                                "obj",
+                                (object,),
+                                {
+                                    "role": "assistant",
+                                    "content": content,
+                                    "tool_calls": tool_calls,
+                                },
+                            )(),
+                            "finish_reason": finish_reason,
+                        },
+                    )()
+                ]
+                self.usage = usage
+
+        return StreamResponse(content, finish_reason, usage, tool_calls)
+
+    @staticmethod
+    def _merge_stream_tool_calls(
+        aggregated_tool_calls: Dict[int, Dict[str, Any]],
+        delta_tool_calls: Any,
+    ) -> Dict[int, Dict[str, Any]]:
+        """Accumulate partial tool call deltas from streaming responses."""
+        if not delta_tool_calls:
+            return aggregated_tool_calls
+
+        for delta_tool_call in delta_tool_calls:
+            index = getattr(delta_tool_call, "index", None)
+            if index is None:
+                index = len(aggregated_tool_calls)
+
+            current = aggregated_tool_calls.setdefault(
+                index,
+                {
+                    "id": None,
+                    "type": "function",
+                    "function": {"name": "", "arguments": ""},
+                },
+            )
+
+            if getattr(delta_tool_call, "id", None):
+                current["id"] = delta_tool_call.id
+            if getattr(delta_tool_call, "type", None):
+                current["type"] = delta_tool_call.type
+
+            function = getattr(delta_tool_call, "function", None)
+            if function:
+                if getattr(function, "name", None):
+                    current["function"]["name"] += function.name
+                if getattr(function, "arguments", None):
+                    current["function"]["arguments"] += function.arguments
+
+        return aggregated_tool_calls
+
+    @staticmethod
+    def _materialize_stream_tool_calls(
+        aggregated_tool_calls: Dict[int, Dict[str, Any]]
+    ) -> List[Any]:
+        """Convert aggregated tool-call chunks into SDK-like objects."""
+        tool_calls = []
+        for _, tool_call in sorted(aggregated_tool_calls.items()):
+            tool_calls.append(
+                SimpleNamespace(
+                    id=tool_call["id"],
+                    type=tool_call["type"],
+                    function=SimpleNamespace(
+                        name=tool_call["function"]["name"],
+                        arguments=tool_call["function"]["arguments"],
+                    ),
+                )
+            )
+        return tool_calls
+
     def _create_client(self) -> Union[AsyncOpenAI, OpenAI]:
         """Create LLM client"""
         http_client_args = {"headers": {"x-upstream-session-id": self.task_id}}
@@ -80,6 +185,7 @@ class OpenAIClient(BaseClient):
         full_content = ""
         finish_reason = None
         usage_data = None
+        aggregated_tool_calls: Dict[int, Dict[str, Any]] = {}
 
         try:
             async for chunk in stream:
@@ -102,6 +208,11 @@ class OpenAIClient(BaseClient):
                     finish_reason = choice.finish_reason
 
                 # 获取 token 使用情况（通常在最后一个 chunk）
+                if hasattr(choice, "delta") and hasattr(choice.delta, "tool_calls"):
+                    aggregated_tool_calls = self._merge_stream_tool_calls(
+                        aggregated_tool_calls, choice.delta.tool_calls
+                    )
+
                 if hasattr(chunk, "usage") and chunk.usage:
                     usage_data = chunk.usage
 
@@ -111,14 +222,20 @@ class OpenAIClient(BaseClient):
 
             # 构造类似非流式响应的对象
             class StreamResponse:
-                def __init__(self, content, finish_reason, usage):
+                def __init__(self, content, finish_reason, usage, tool_calls):
                     self.choices = [
                         type(
                             "obj",
                             (object,),
                             {
                                 "message": type(
-                                    "obj", (object,), {"content": content}
+                                    "obj",
+                                    (object,),
+                                    {
+                                        "role": "assistant",
+                                        "content": content,
+                                        "tool_calls": tool_calls,
+                                    },
                                 )(),
                                 "finish_reason": finish_reason,
                             },
@@ -126,7 +243,12 @@ class OpenAIClient(BaseClient):
                     ]
                     self.usage = usage
 
-            response = StreamResponse(full_content, finish_reason, usage_data)
+            response = StreamResponse(
+                full_content,
+                finish_reason,
+                usage_data,
+                self._materialize_stream_tool_calls(aggregated_tool_calls),
+            )
 
             self.task_log.log_step(
                 "info",
@@ -195,15 +317,23 @@ class OpenAIClient(BaseClient):
         current_max_tokens = self.max_tokens
 
         for attempt in range(max_retries):
+            formatted_tools = []
+            if tools_definitions and self.use_tool_calls is not False:
+                formatted_tools = await self.convert_tool_definition_to_tool_call(
+                    tools_definitions
+                )
+
             params = {
                 "model": self.model_name,
                 "temperature": self.temperature,
                 "messages": messages_for_llm,
-                "tools": [],
+                "tools": formatted_tools,
                 "stream": stream,
                 "top_p": self.top_p,
                 "extra_body": {},
             }
+            if formatted_tools:
+                params["tool_choice"] = "auto"
             # Check if the model is GPT-5, and adjust the parameter accordingly
             if "gpt-5" in self.model_name:
                 # Use 'max_completion_tokens' for GPT-5
@@ -223,6 +353,11 @@ class OpenAIClient(BaseClient):
                 params["extra_body"]["thinking"] = {"type": "enabled"}
 
             try:
+                self.task_log.log_step(
+                    "info",
+                    "LLM | Call Start",
+                    f"Calling LLM ({'async' if self.async_client else 'sync'}) attempt {attempt + 1}/{max_retries}",
+                )
 
                 if self.async_client:
                     if stream:
@@ -243,6 +378,7 @@ class OpenAIClient(BaseClient):
                         full_content = ""
                         finish_reason = None
                         usage_data = None
+                        aggregated_tool_calls: Dict[int, Dict[str, Any]] = {}
 
                         for chunk in stream_response:
                             if not chunk.choices:
@@ -254,6 +390,14 @@ class OpenAIClient(BaseClient):
                                 content = choice.delta.content
                                 if content:
                                     full_content += content
+                            if hasattr(choice, "delta") and hasattr(
+                                choice.delta, "tool_calls"
+                            ):
+                                aggregated_tool_calls = (
+                                    self._merge_stream_tool_calls(
+                                        aggregated_tool_calls, choice.delta.tool_calls
+                                    )
+                                )
                             if (
                                 hasattr(choice, "finish_reason")
                                 and choice.finish_reason
@@ -266,14 +410,20 @@ class OpenAIClient(BaseClient):
                             self._update_token_usage(usage_data)
 
                         class StreamResponse:
-                            def __init__(self, content, finish_reason, usage):
+                            def __init__(self, content, finish_reason, usage, tool_calls):
                                 self.choices = [
                                     type(
                                         "obj",
                                         (object,),
                                         {
                                             "message": type(
-                                                "obj", (object,), {"content": content}
+                                                "obj",
+                                                (object,),
+                                                {
+                                                    "role": "assistant",
+                                                    "content": content,
+                                                    "tool_calls": tool_calls,
+                                                },
                                             )(),
                                             "finish_reason": finish_reason,
                                         },
@@ -282,7 +432,12 @@ class OpenAIClient(BaseClient):
                                 self.usage = usage
 
                         response = StreamResponse(
-                            full_content, finish_reason, usage_data
+                            full_content,
+                            finish_reason,
+                            usage_data,
+                            self._materialize_stream_tool_calls(
+                                aggregated_tool_calls
+                            ),
                         )
                     else:
                         response = self.client.chat.completions.create(**params)
@@ -376,6 +531,22 @@ class OpenAIClient(BaseClient):
                 )
                 raise e
             except Exception as e:
+                connection_error_markers = (
+                    "Connection error",
+                    "ConnectError",
+                    "APIConnectionError",
+                    "WinError 10061",
+                    "actively refused",
+                    "由于目标计算机积极拒绝",
+                )
+                if any(marker in str(e) for marker in connection_error_markers):
+                    self.task_log.log_step(
+                        "error",
+                        "LLM | Connection Error",
+                        "The configured model endpoint is unreachable. Check OPENAI_BASE_URL / proxy service status and network connectivity before retrying.",
+                    )
+                    raise e
+
                 if "Error code: 400" in str(e) and "longer than the model" in str(e):
                     self.task_log.log_step(
                         "error",
@@ -414,16 +585,27 @@ class OpenAIClient(BaseClient):
             )
             return "", True, message_history  # Exit loop, return message_history
 
+        finish_reason = llm_response.choices[0].finish_reason
+        message = llm_response.choices[0].message
+        assistant_response_text = message.content or ""
+        tool_calls = getattr(message, "tool_calls", None) or []
+
+        assistant_message: Dict[str, Any] = {
+            "role": "assistant",
+            "content": assistant_response_text,
+        }
+        if tool_calls:
+            assistant_message["tool_calls"] = [
+                self._serialize_tool_call(tool_call) for tool_call in tool_calls
+            ]
+
         # Extract LLM response text
-        if llm_response.choices[0].finish_reason == "stop":
-            assistant_response_text = llm_response.choices[0].message.content or ""
+        if finish_reason in {"stop", "tool_calls"} or (
+            finish_reason is None and (assistant_response_text or tool_calls)
+        ):
+            message_history.append(assistant_message)
 
-            message_history.append(
-                {"role": "assistant", "content": assistant_response_text}
-            )
-
-        elif llm_response.choices[0].finish_reason == "length":
-            assistant_response_text = llm_response.choices[0].message.content or ""
+        elif finish_reason == "length":
             if assistant_response_text == "":
                 assistant_response_text = "LLM response is empty."
             elif "Context length exceeded" in assistant_response_text:
@@ -433,9 +615,8 @@ class OpenAIClient(BaseClient):
                     "LLM | Context Length",
                     "Detected context length exceeded, returning error status",
                 )
-                message_history.append(
-                    {"role": "assistant", "content": assistant_response_text}
-                )
+                assistant_message["content"] = assistant_response_text
+                message_history.append(assistant_message)
                 return (
                     assistant_response_text,
                     True,
@@ -443,14 +624,11 @@ class OpenAIClient(BaseClient):
                 )  # Return True to indicate need to exit loop
 
             # Add assistant response to history
-            message_history.append(
-                {"role": "assistant", "content": assistant_response_text}
-            )
+            assistant_message["content"] = assistant_response_text
+            message_history.append(assistant_message)
 
         else:
-            raise ValueError(
-                f"Unsupported finish reason: {llm_response.choices[0].finish_reason}"
-            )
+            raise ValueError(f"Unsupported finish reason: {finish_reason}")
 
         return assistant_response_text, False, message_history
 
@@ -460,12 +638,34 @@ class OpenAIClient(BaseClient):
         """Extract tool call information from LLM response"""
         from ...utils.parsing_utils import parse_llm_response_for_tool_calls
 
+        if (
+            llm_response
+            and getattr(llm_response, "choices", None)
+            and getattr(llm_response.choices[0], "message", None)
+            and getattr(llm_response.choices[0].message, "tool_calls", None)
+        ):
+            return parse_llm_response_for_tool_calls(
+                llm_response.choices[0].message.tool_calls
+            )
+
         return parse_llm_response_for_tool_calls(assistant_response_text)
 
     def update_message_history(
         self, message_history: List[Dict], all_tool_results_content_with_id: List[Tuple]
     ) -> List[Dict]:
         """Update message history with tool calls data (llm client specific)"""
+        if message_history and message_history[-1].get("tool_calls"):
+            for call_id, tool_result in all_tool_results_content_with_id:
+                if tool_result["type"] != "text":
+                    continue
+                message_history.append(
+                    {
+                        "role": "tool",
+                        "tool_call_id": call_id,
+                        "content": tool_result["text"],
+                    }
+                )
+            return message_history
 
         merged_text = "\n".join(
             [

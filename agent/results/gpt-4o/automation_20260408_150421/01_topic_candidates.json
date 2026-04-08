@@ -1,0 +1,38 @@
+{
+  "domain": "量子科技",
+  "complexity": "high",
+  "candidates": [
+    {
+      "topic": "中国量子产业政策的现状与优化建议",
+      "rationale": "该主题探讨了中国量子产业政策的现状、存在的问题以及优化建议。研究表明，尽管政策工具多样，但缺乏平衡性，政策效力偏弱。通过分析政策工具、作用主体和政策力度，可以为政策优化提供建议。",
+      "relevance_score": 8.5,
+      "source_links": [
+        "https://www.secrss.com/articles/78125"
+      ]
+    },
+    {
+      "topic": "中国量子通信行业的市场现状与发展趋势",
+      "rationale": "该主题分析了中国量子通信行业的市场现状、竞争格局和发展趋势。量子通信作为信息通信领域的前沿技术，具有高度的安全性和传输效率，是未来信息安全的重要保障。",
+      "relevance_score": 9.0,
+      "source_links": [
+        "https://bg.qianzhan.com/trends/detail/506/251014-009d7606.html"
+      ]
+    },
+    {
+      "topic": "后量子密码技术的发展与应用",
+      "rationale": "该主题关注后量子密码技术的发展，尤其是在应对量子计算威胁方面的关键作用。随着量子计算的发展，传统加密技术面临挑战，后量子密码技术成为保障信息安全的关键。",
+      "relevance_score": 8.0,
+      "source_links": [
+        "https://pdf.dfcfw.com/pdf/H3_AP202509161744654771_1.pdf"
+      ]
+    }
+  ],
+  "selected_topic": {
+    "topic": "中国量子通信行业的市场现状与发展趋势",
+    "rationale": "量子通信技术作为信息安全的前沿技术，具有重要的战略意义和市场潜力。研究该主题有助于理解行业的发展动态及其在全球市场中的竞争地位。",
+    "source_links": [
+      "https://bg.qianzhan.com/trends/detail/506/251014-009d7606.html"
+    ],
+    "freshness_window": "2025年10月"
+  }
+}

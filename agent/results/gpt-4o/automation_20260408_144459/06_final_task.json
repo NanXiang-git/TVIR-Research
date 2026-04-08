@@ -1,0 +1,78 @@
+{
+  "complexity": "low",
+  "user_role": "某医疗健康研究机构的政策分析师",
+  "main_task": "本人作为某医疗健康研究机构的政策分析师，正在撰写一份关于互联网医疗政策与市场发展趋势的深度研究报告。该报告旨在分析互联网医疗在政策支持和技术融合下的快速发展路径，尤其关注中国市场的政策顶层设计和技术赋能对医疗体系转型的影响。",
+  "sub_questions": [
+    "政策驱动因素分析：研究近年来中国互联网医疗相关政策的出台背景、主要内容及其对行业发展的影响。",
+    "技术融合与应用案例：探讨5G、AI等技术在互联网医疗中的具体应用案例及其带来的服务模式变革。",
+    "市场规模与趋势预测：分析互联网医疗市场的现状及未来发展趋势，预测市场规模的增长潜力。"
+  ],
+  "question_details": [],
+  "multimodal_requirements": [
+    {
+      "type": "image",
+      "description": "互联网医疗的政策与市场发展趋势相关结构示意图",
+      "verification": "Validated by direct HTTP accessibility check and VQA content check.",
+      "source": "https://img.gonyn.com/images/2026/0323/393afddbbd7fff6d2023a67e4360794ef150dd3f.png",
+      "source_page": "https://www.gonyn.com/industry/1928697.html"
+    },
+    {
+      "type": "chart",
+      "description": "互联网医疗的政策与市场发展趋势关键指标对比图折线图",
+      "data_source": "https://www.shdrc.org/upload/editor/file/20250825/1756075887356487782.pdf",
+      "reproducibility_note": "Use the public source page '[PDF] 卫生政策研究进展' and extract the quantitative values described there to rebuild the chart.",
+      "source_page": "[PDF] 卫生政策研究进展"
+    },
+    {
+      "type": "chart",
+      "description": "技术融合与应用案例：探讨5G、AI等技术在互联网医疗中的具体应用案例及其带来的服务模式变革柱状图",
+      "data_source": "https://www.shdrc.org/upload/editor/file/20250825/1756075887356487782.pdf",
+      "reproducibility_note": "Use the public source page '[PDF] 卫生政策研究进展' and extract the quantitative values described there to rebuild the chart.",
+      "source_page": "[PDF] 卫生政策研究进展"
+    },
+    {
+      "type": "chart",
+      "description": "市场规模与趋势预测：分析互联网医疗市场的现状及未来发展趋势，预测市场规模的增长潜力折线图",
+      "data_source": "https://static.www.tencent.com/attachments/ssv/2025/tencent-ssv-report-2024.pdf",
+      "reproducibility_note": "Use the public source page '[PDF] 腾讯可持续社会价值报告2024' and extract the quantitative values described there to rebuild the chart.",
+      "source_page": "[PDF] 腾讯可持续社会价值报告2024"
+    }
+  ],
+  "citations": [
+    {
+      "label": "image_source",
+      "url": "https://www.gonyn.com/industry/1928697.html"
+    },
+    {
+      "label": "chart_source",
+      "url": "https://www.shdrc.org/upload/editor/file/20250825/1756075887356487782.pdf"
+    },
+    {
+      "label": "chart_source",
+      "url": "https://static.www.tencent.com/attachments/ssv/2025/tencent-ssv-report-2024.pdf"
+    },
+    {
+      "label": "topic_source_1",
+      "url": "https://www.chyxx.com/industry/1249007.html"
+    }
+  ],
+  "quality_checks": {
+    "role_clear": true,
+    "sub_questions_coherent": true,
+    "timely_sources": true,
+    "image_accessible": true,
+    "chart_reproducible": true
+  },
+  "repair_notes": [
+    "Replaced the image link with a publicly accessible direct image URL verified by code.",
+    "Replaced the chart source with a publicly accessible source page and regenerated the reproducibility note."
+  ],
+  "validation_issues": [
+    "用户角色明确且可信，但缺少 citation 和数据源的引用，尤其是 2021 年后的来源。",
+    "研究维度关联性较好，但复杂度为 low，内容过长且过细，不符合 low 的复杂度要求。",
+    "多模态元素描述不够具体，未明确其如何支持研究维度，部分描述如 '结构示意图' 和 '关键指标对比图' 过于泛泛。",
+    "图表数据源和可复现性信息缺失，无法验证其可追溯性和复现性。",
+    "图片链接和内容验证缺失，无法确认其是否符合任务描述。"
+  ],
+  "query": "本人作为某医疗健康研究机构的政策分析师，正在撰写一份深度研究报告。请聚焦2021年后的最新数据、政策文本与权威文献，围绕本人作为某医疗健康研究机构的政策分析师，正在撰写一份关于互联网医疗政策与市场发展趋势的深度研究报告。该报告旨在分析互联网医疗在政策支持和技术融合下的快速发展路径，尤其关注中国市场的政策顶层设计和技术赋能对医疗体系转型的影响展开研究，重点回答以下问题：（1）政策驱动因素分析：研究近年来中国互联网医疗相关政策的出台背景、主要内容及其对行业发展的影响；绘制一张折线图，展示互联网医疗的政策与市场发展趋势关键指标对比图 （2）技术融合与应用案例：探讨5G、AI等技术在互联网医疗中的具体应用案例及其带来的服务模式变革；绘制一张柱状图，展示技术融合与应用案例：探讨5G、AI等技术在互联网医疗中的具体应用案例及其带来的服务模式变革 （3）市场规模与趋势预测：分析互联网医疗市场的现状及未来发展趋势，预测市场规模的增长潜力；绘制一张折线图，展示市场规模与趋势预测：分析互联网医疗市场的现状及未来发展趋势，预测市场规模的增长潜力。请基于可核实来源形成简洁但专业的分析，并给出明确结论与建议。"
+}

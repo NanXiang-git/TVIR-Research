@@ -1,0 +1,55 @@
+{
+  "complexity": "low",
+  "user_role": "某医疗健康研究机构的政策分析师",
+  "main_task": "本人作为某医疗健康研究机构的政策分析师，正在撰写一份关于互联网医疗政策与市场发展趋势的深度研究报告。该报告旨在分析互联网医疗在政策支持和技术融合下的快速发展路径，尤其关注中国市场的政策顶层设计和技术赋能对医疗体系转型的影响。",
+  "sub_questions": [
+    "政策驱动因素分析：研究近年来中国互联网医疗相关政策的出台背景、主要内容及其对行业发展的影响。",
+    "技术融合与应用案例：探讨5G、AI等技术在互联网医疗中的具体应用案例及其带来的服务模式变革。",
+    "市场规模与趋势预测：分析互联网医疗市场的现状及未来发展趋势，预测市场规模的增长潜力。"
+  ],
+  "question_details": [],
+  "multimodal_requirements": [
+    {
+      "type": "image",
+      "description": "互联网医疗的政策与市场发展趋势相关结构示意图",
+      "verification": "Validated by direct HTTP accessibility check and VQA content check.",
+      "source": "https://img.gonyn.com/images/2026/0323/393afddbbd7fff6d2023a67e4360794ef150dd3f.png",
+      "source_page": "https://www.gonyn.com/industry/1928697.html"
+    },
+    {
+      "type": "chart",
+      "description": "互联网医疗的政策与市场发展趋势关键指标对比图折线图",
+      "data_source": "https://www.shdrc.org/upload/editor/file/20250825/1756075887356487782.pdf",
+      "reproducibility_note": "Use the public source page '[PDF] 卫生政策研究进展' and extract the quantitative values described there to rebuild the chart.",
+      "source_page": "[PDF] 卫生政策研究进展"
+    },
+    {
+      "type": "chart",
+      "description": "技术融合与应用案例：探讨5G、AI等技术在互联网医疗中的具体应用案例及其带来的服务模式变革柱状图",
+      "data_source": "https://www.shdrc.org/upload/editor/file/20250825/1756075887356487782.pdf",
+      "reproducibility_note": "Use the public source page '[PDF] 卫生政策研究进展' and extract the quantitative values described there to rebuild the chart.",
+      "source_page": "[PDF] 卫生政策研究进展"
+    },
+    {
+      "type": "chart",
+      "description": "市场规模与趋势预测：分析互联网医疗市场的现状及未来发展趋势，预测市场规模的增长潜力折线图",
+      "data_source": "https://static.www.tencent.com/attachments/ssv/2025/tencent-ssv-report-2024.pdf",
+      "reproducibility_note": "Use the public source page '[PDF] 腾讯可持续社会价值报告2024' and extract the quantitative values described there to rebuild the chart.",
+      "source_page": "[PDF] 腾讯可持续社会价值报告2024"
+    }
+  ],
+  "citations": [
+    {
+      "label": "image_source",
+      "url": "https://www.gonyn.com/industry/1928697.html"
+    },
+    {
+      "label": "chart_source",
+      "url": "https://www.shdrc.org/upload/editor/file/20250825/1756075887356487782.pdf"
+    },
+    {
+      "label": "chart_source",
+      "url": "https://static.www.tencent.com/attachments/ssv/2025/tencent-ssv-report-2024.pdf"
+    }
+  ]
+}

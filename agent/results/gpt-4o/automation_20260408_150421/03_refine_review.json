@@ -1,0 +1,16 @@
+{
+  "mode": "inspect",
+  "needs_repair": true,
+  "issues": [
+    "{'type': 'citation_recency', 'description': '部分引用来源可能早于2021年，未完全满足优先使用2021年后来源的要求。', 'details': [{'citation_label': 'question_2_reference', 'issue': '引用的报告可能早于2021年，需验证其发布时间。'}]}",
+    "{'type': 'image_accessibility', 'description': '部分图片链接需验证内容是否与描述一致。', 'details': [{'image_description': '量子通信产业链示意图', 'source': 'https://bg.qianzhan.com/trends/detail/506/251014-009d7606.html', 'issue': '需验证图片内容是否与描述一致。'}]}",
+    "{'type': 'chart_reproducibility', 'description': '部分图表数据源不可追溯或说明不完整。', 'details': [{'chart_description': '未来趋势与挑战：预测量子通信行业未来发展趋势，并分析可能面临的技术与政策挑战折线图', 'issue': '数据来源和可复现性说明缺失。'}]}"
+  ],
+  "quality_checks": {
+    "role_clear": true,
+    "sub_questions_coherent": true,
+    "timely_sources": false,
+    "image_accessible": false,
+    "chart_reproducible": false
+  }
+}

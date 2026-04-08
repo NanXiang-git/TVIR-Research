@@ -1,0 +1,59 @@
+{
+  "complexity": "low",
+  "user_role": "某大型云服务商AI基础设施采购与供应链经理（负责AI加速卡/整机关键物料谈判、交付周期管理与供应风险评估）",
+  "main_task": "完成一页研究简报（1-pager），仅聚焦“先进封装产能瓶颈与交付期”这一维度：基于TSMC等权威一手来源，核实并摘录2025年CoWoS产能翻倍、2026年供需更趋平衡的官方表述，给出对我司2025-2026年Blackwell/Rubin代GPU或自研ASIC交付窗口的简要影响判断与行动建议（例如锁定封装时槽、与供应商协同排产）。仅使用2021年以后可核验来源；不纳入无法追溯的图表或传闻。",
+  "sub_questions": [
+    "先进封装产能瓶颈与交付期：核实“TSMC 2025年需将CoWoS产能翻倍且仍满载，2026年供需更趋平衡”的管理层口径，并用一句话评估对我司2025-2026交付窗口的影响与风险缓释节点。",
+    "补充分析与“HBM3E/HBM4（2024-2026）供需与先进封装瓶颈：价格走势、产能扩张与供应链风险建模”直接相关的关键问题 2",
+    "补充分析与“HBM3E/HBM4（2024-2026）供需与先进封装瓶颈：价格走势、产能扩张与供应链风险建模”直接相关的关键问题 3"
+  ],
+  "question_details": [],
+  "multimodal_requirements": [
+    {
+      "type": "chart",
+      "description": "TSMC CoWoS扩产口径对比表（表格）：列出“声明时间/来源、原文摘录、适用年份（2025/2026）、对交付期推断”",
+      "source": "TSMC 2025年Q1法说会实录；TSMC 2025年股东会资料（辅助）",
+      "source_page": "法说会Q&A中对JPMorgan提问的回答；股东会资料关于先进封装布局段落",
+      "verification": "已抓取并核读TSMC法说会PDF，确认原文包含“double our CoWoS capacity… Still fully loaded… more balanced next year”表述；作为主引。股东会资料用于补充布局背景。",
+      "data_source": [
+        "https://investor.tsmc.com/chinese/encrypt/files/encrypt_file/reports/2025-04/7630274eecc1197a4e3ea6a415f44a47204fe10a/TSMC%201Q25%20Transcript.pdf",
+        "https://investor.tsmc.com/sites/ir/shareholders-meeting/2025-06-03/2025AGM_Agenda_wmn.pdf"
+      ],
+      "reproducibility_note": "表格字段固定为：时间/来源、原文摘录（英文或中译并附简短引用位置说明）、适用年份、交付期推断。法说会引用注明Q&A环节（JPMorgan提问），并保留英文原句以便复核。"
+    },
+    {
+      "type": "image",
+      "description": "HBM3E/HBM4（2024-2026）供需与先进封装瓶颈：价格走势、产能扩张与供应链风险建模相关结构示意图",
+      "verification": "No publicly accessible direct image URL could be validated automatically.",
+      "source": ""
+    },
+    {
+      "type": "chart",
+      "description": "补充分析与“HBM3E/HBM4（2024-2026）供需与先进封装瓶颈：价格走势、产能扩张与供应链风险建模”直接相关的关键问题 2柱状图",
+      "data_source": "",
+      "reproducibility_note": ""
+    },
+    {
+      "type": "chart",
+      "description": "补充分析与“HBM3E/HBM4（2024-2026）供需与先进封装瓶颈：价格走势、产能扩张与供应链风险建模”直接相关的关键问题 3柱状图",
+      "data_source": "",
+      "reproducibility_note": ""
+    }
+  ],
+  "citations": [
+    {
+      "label": "reference",
+      "url": "https://investor.tsmc.com/chinese/encrypt/files/encrypt_file/reports/2025-04/7630274eecc1197a4e3ea6a415f44a47204fe10a/TSMC%201Q25%20Transcript.pdf",
+      "title": "TSMC 2025年Q1法说会实录",
+      "used_for": "先进封装（CoWoS）2025年产能翻倍与2026年供需更趋平衡的官方口径验证",
+      "key_finding": "Q&A原文：“As I said, we have to double our CoWoS capacity… Still fully loaded… I believe that it will be more balanced next year.” 支撑对交付窗口的定性判断。"
+    },
+    {
+      "label": "reference",
+      "url": "https://investor.tsmc.com/sites/ir/shareholders-meeting/2025-06-03/2025AGM_Agenda_wmn.pdf",
+      "title": "TSMC 2025年股东会资料（议程）",
+      "used_for": "作为先进封装扩产与多地布局的背景补充，辅助理解产能扩张路径",
+      "key_finding": "提及公司在多地扩充先进封装相关能力，佐证扩产方向与规划（非倍数/年份主依据）。"
+    }
+  ]
+}

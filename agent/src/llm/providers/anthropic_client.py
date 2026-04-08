@@ -3,6 +3,7 @@
 
 import asyncio
 import dataclasses
+import httpx
 import logging
 from typing import Any, Dict, List, Tuple, Union
 
@@ -14,12 +15,21 @@ from anthropic import (
     DefaultAsyncHttpxClient,
     DefaultHttpxClient,
 )
-from tenacity import retry, stop_after_attempt, wait_fixed
+from tenacity import (
+    retry,
+    retry_if_not_exception_type,
+    stop_after_attempt,
+    wait_fixed,
+)
 
 from ...utils.prompt_utils import generate_mcp_system_prompt
 from ..base_client import BaseClient
 
 logger = logging.getLogger("tvir_agent")
+
+
+class NonRetryableAnthropicError(Exception):
+    """Exception type for endpoint/config errors that should fail fast."""
 
 
 @dataclasses.dataclass
@@ -32,10 +42,19 @@ class AnthropicClient(BaseClient):
         self.output_tokens: int = 0
         self.cache_creation_tokens: int = 0
         self.cache_read_tokens: int = 0
+        self.thinking_enabled: bool = bool(
+            self.cfg.llm.get("thinking_enabled", False)
+        )
+        self.thinking_budget_tokens: int = int(
+            self.cfg.llm.get("thinking_budget_tokens", 1024)
+        )
 
     def _create_client(self) -> Union[AsyncAnthropic, Anthropic]:
         """Create LLM client"""
-        http_client_args = {"headers": {"x-upstream-session-id": self.task_id}}
+        http_client_args = {
+            "headers": {"x-upstream-session-id": self.task_id},
+            "timeout": httpx.Timeout(30.0, connect=10.0),
+        }
         if self.async_client:
             return AsyncAnthropic(
                 api_key=self.api_key,
@@ -84,13 +103,18 @@ class AnthropicClient(BaseClient):
                 "warning", "LLM | Token Usage", "Warning: No valid usage_data received."
             )
 
-    @retry(wait=wait_fixed(10), stop=stop_after_attempt(5))
+    @retry(
+        wait=wait_fixed(10),
+        stop=stop_after_attempt(5),
+        retry=retry_if_not_exception_type(NonRetryableAnthropicError),
+    )
     async def _create_message(
         self,
         system_prompt: str,
         messages_history: List[Dict[str, Any]],
         tools_definitions,
         keep_tool_result: int = -1,
+        stream: bool = False,
     ):
         """
         Send message to Anthropic API.
@@ -114,50 +138,36 @@ class AnthropicClient(BaseClient):
         processed_messages = self._apply_cache_control(messages_for_llm)
 
         try:
-            if self.async_client:
-                response = await self.client.messages.create(
-                    model=self.model_name,
-                    temperature=self.temperature,
-                    top_p=self.top_p if self.top_p != 1.0 else NOT_GIVEN,
-                    top_k=self.top_k if self.top_k != -1 else NOT_GIVEN,
-                    max_tokens=self.max_tokens,
-                    repetition_penalty=(
-                        self.repetition_penalty
-                        if self.repetition_penalty != 1.0
-                        else NOT_GIVEN
+            create_params = {
+                "model": self.model_name,
+                "top_p": self.top_p if self.top_p not in (None, 1.0) else NOT_GIVEN,
+                "top_k": self.top_k if self.top_k != -1 else NOT_GIVEN,
+                "max_tokens": self.max_tokens,
+                "system": [
+                    {
+                        "type": "text",
+                        "text": system_prompt,
+                        "cache_control": {"type": "ephemeral"},
+                    }
+                ],
+                "messages": processed_messages,
+                "stream": False,
+            }
+
+            if self.thinking_enabled:
+                create_params["thinking"] = {
+                    "type": "enabled",
+                    "budget_tokens": min(
+                        self.thinking_budget_tokens, max(self.max_tokens - 1, 1024)
                     ),
-                    system=[
-                        {
-                            "type": "text",
-                            "text": system_prompt,
-                            "cache_control": {"type": "ephemeral"},
-                        }
-                    ],
-                    messages=processed_messages,
-                    stream=False,
-                )
+                }
             else:
-                response = self.client.messages.create(
-                    model=self.model_name,
-                    temperature=self.temperature,
-                    top_p=self.top_p if self.top_p != 1.0 else NOT_GIVEN,
-                    top_k=self.top_k if self.top_k != -1 else NOT_GIVEN,
-                    max_tokens=self.max_tokens,
-                    repetition_penalty=(
-                        self.repetition_penalty
-                        if self.repetition_penalty != 1.0
-                        else NOT_GIVEN
-                    ),
-                    system=[
-                        {
-                            "type": "text",
-                            "text": system_prompt,
-                            "cache_control": {"type": "ephemeral"},
-                        }
-                    ],
-                    messages=processed_messages,
-                    stream=False,
-                )
+                create_params["temperature"] = self.temperature
+
+            if self.async_client:
+                response = await self.client.messages.create(**create_params)
+            else:
+                response = self.client.messages.create(**create_params)
             self._update_token_usage(getattr(response, "usage", None))
             self.task_log.log_step(
                 "info",
@@ -175,6 +185,21 @@ class AnthropicClient(BaseClient):
             )
             raise  # Re-raise to allow decorator to log it
         except Exception as e:
+            connection_error_markers = (
+                "Connection error",
+                "ConnectError",
+                "APIConnectionError",
+                "WinError 10061",
+                "actively refused",
+                "由于目标计算机积极拒绝",
+            )
+            if any(marker in str(e) for marker in connection_error_markers):
+                self.task_log.log_step(
+                    "error",
+                    "LLM | Connection Error",
+                    "The configured Anthropic endpoint is unreachable. Check ANTHROPIC_BASE_URL / proxy service status and network connectivity before retrying.",
+                )
+                raise NonRetryableAnthropicError(str(e)) from e
             self.task_log.log_step(
                 "error", "LLM | Call Failed", f"Anthropic LLM call failed: {str(e)}"
             )
@@ -208,6 +233,13 @@ class AnthropicClient(BaseClient):
             if block.type == "text":
                 assistant_response_text += block.text + "\n"
                 assistant_response_content.append({"type": "text", "text": block.text})
+            elif block.type == "thinking":
+                thinking_block = {"type": "thinking"}
+                if hasattr(block, "thinking"):
+                    thinking_block["thinking"] = block.thinking
+                if hasattr(block, "signature"):
+                    thinking_block["signature"] = block.signature
+                assistant_response_content.append(thinking_block)
             elif block.type == "tool_use":
                 assistant_response_content.append(
                     {

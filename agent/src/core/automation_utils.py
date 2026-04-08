@@ -18,12 +18,100 @@ def target_sub_question_count(complexity: str) -> int:
     return {"low": 3, "medium": 4, "high": 5}.get(complexity, 4)
 
 
+def target_analysis_point_count(complexity: str) -> int:
+    return {"low": 1, "medium": 2, "high": 3}.get(complexity, 2)
+
+
 def _ensure_string_list(value: Any) -> List[str]:
     if isinstance(value, list):
         return [str(item).strip() for item in value if str(item).strip()]
     if isinstance(value, str) and value.strip():
         return [value.strip()]
     return []
+
+
+def _normalize_citation_items(value: Any, default_label: str = "reference") -> List[Dict[str, str]]:
+    normalized: List[Dict[str, str]] = []
+    items = value if isinstance(value, list) else [value]
+    for item in items:
+        if isinstance(item, str) and item.strip():
+            normalized.append({"label": default_label, "url": item.strip()})
+            continue
+        if not isinstance(item, dict):
+            continue
+        url = str(item.get("url", "")).strip()
+        title = str(item.get("title", "")).strip()
+        if not url and not title:
+            continue
+        citation = {
+            "label": str(item.get("label", default_label)).strip() or default_label,
+        }
+        if url:
+            citation["url"] = url
+        if title:
+            citation["title"] = title
+        for key in ("used_for", "key_finding", "summary", "entity"):
+            text = str(item.get(key, "")).strip()
+            if text:
+                citation[key] = text
+        normalized.append(citation)
+    return normalized
+
+
+def _default_analysis_points(title: str, complexity: str, language: str) -> List[str]:
+    point_count = target_analysis_point_count(complexity)
+    if language == "zh":
+        defaults = [
+            f"梳理“{title}”的关键事实、最新进展与核心驱动因素",
+            f"比较“{title}”相关案例、指标差异与现实约束",
+            f"评估“{title}”的风险边界、政策影响与后续行动建议",
+        ]
+    else:
+        defaults = [
+            f"Clarify the latest facts, developments, and drivers for '{title}'",
+            f"Compare representative cases, metrics, and constraints related to '{title}'",
+            f"Assess the risks, policy implications, and recommended next steps for '{title}'",
+        ]
+    return defaults[:point_count]
+
+
+def _normalize_question_details(
+    raw_details: Any,
+    sub_questions: List[str],
+    complexity: str,
+    language: str,
+) -> List[Dict[str, Any]]:
+    if complexity == "low":
+        return []
+
+    point_count = target_analysis_point_count(complexity)
+    normalized: List[Dict[str, Any]] = []
+    details = raw_details if isinstance(raw_details, list) else []
+
+    for index, title in enumerate(sub_questions):
+        raw = details[index] if index < len(details) and isinstance(details[index], dict) else {}
+        detail_title = str(raw.get("title", raw.get("question", title))).strip() or title
+        analysis_points = _ensure_string_list(
+            raw.get("analysis_points", raw.get("focus_points", raw.get("sub_questions", [])))
+        )[:point_count]
+        while len(analysis_points) < point_count:
+            analysis_points = analysis_points + _default_analysis_points(
+                detail_title, complexity, language
+            )[len(analysis_points):point_count]
+
+        detail: Dict[str, Any] = {
+            "title": detail_title,
+            "analysis_points": analysis_points,
+            "citations": _normalize_citation_items(
+                raw.get("citations", []), default_label=f"question_{index + 1}_reference"
+            ),
+        }
+        objective = str(raw.get("objective", "")).strip()
+        if objective:
+            detail["objective"] = objective
+        normalized.append(detail)
+
+    return normalized
 
 
 def normalize_topic_result(raw: Any, domain: str, complexity: str) -> Dict[str, Any]:
@@ -121,6 +209,14 @@ def normalize_query_result(
         main_task = topic_text
 
     sub_questions = _ensure_string_list(raw.get("sub_questions"))[:question_count]
+    if not sub_questions and isinstance(raw.get("question_details"), list):
+        derived_titles = []
+        for item in raw.get("question_details", []):
+            if isinstance(item, dict):
+                title = str(item.get("title", item.get("question", ""))).strip()
+                if title:
+                    derived_titles.append(title)
+        sub_questions = derived_titles[:question_count]
     while len(sub_questions) < question_count:
         index = len(sub_questions) + 1
         sub_questions.append(
@@ -140,6 +236,8 @@ def normalize_query_result(
         if not isinstance(item, dict):
             continue
         item_type = str(item.get("type", "")).strip().lower()
+        if item_type == "table":
+            item_type = "chart"
         if item_type not in {"image", "chart"}:
             continue
         normalized_item = {
@@ -203,29 +301,20 @@ def normalize_query_result(
         language=language,
     )
 
-    citations = raw.get("citations", [])
-    if isinstance(citations, list):
-        normalized_citations = []
-        for item in citations:
-            if isinstance(item, dict):
-                url = str(item.get("url", "")).strip()
-                if url:
-                    normalized_citations.append(
-                        {
-                            "label": str(item.get("label", "reference")).strip()
-                            or "reference",
-                            "url": url,
-                        }
-                    )
-            elif isinstance(item, str) and item.strip():
-                normalized_citations.append({"label": "reference", "url": item.strip()})
-    else:
-        normalized_citations = []
+    normalized_citations = _normalize_citation_items(raw.get("citations", []))
+    question_details = _normalize_question_details(
+        raw_details=raw.get("question_details", []),
+        sub_questions=sub_questions,
+        complexity=complexity,
+        language=language,
+    )
 
     return {
+        "complexity": complexity,
         "user_role": user_role,
         "main_task": main_task,
         "sub_questions": sub_questions,
+        "question_details": question_details,
         "multimodal_requirements": normalized_multimodal,
         "citations": normalized_citations,
     }
@@ -274,13 +363,28 @@ def normalize_refine_repair(raw: Any, fallback_query: Dict[str, Any]) -> Dict[st
     }
 
 
+def _collect_all_citations(task: Dict[str, Any]) -> List[Dict[str, Any]]:
+    citations = task.get("citations", [])
+    if not isinstance(citations, list):
+        citations = []
+
+    question_details = task.get("question_details", [])
+    if isinstance(question_details, list):
+        for item in question_details:
+            if isinstance(item, dict) and isinstance(item.get("citations"), list):
+                citations.extend(
+                    citation
+                    for citation in item["citations"]
+                    if isinstance(citation, dict)
+                )
+    return citations
+
+
 def infer_quality_checks(task: Dict[str, Any]) -> Dict[str, bool]:
     role_clear = bool(str(task.get("user_role", "")).strip())
     sub_questions = _ensure_string_list(task.get("sub_questions"))
     sub_questions_coherent = len(sub_questions) >= 3
-    citations = task.get("citations", [])
-    if not isinstance(citations, list):
-        citations = []
+    citations = _collect_all_citations(task)
     timely_sources = any(
         re.search(r"\b(202[1-9]|203\d)\b", " ".join(map(str, item.values())))
         for item in citations
@@ -318,7 +422,11 @@ def synthesize_query_description(
 ) -> str:
     user_role = str(task.get("user_role", "")).strip()
     main_task = str(task.get("main_task", "")).strip()
+    complexity = str(task.get("complexity", "medium")).strip() or "medium"
     sub_questions = _ensure_string_list(task.get("sub_questions"))
+    question_details = task.get("question_details", [])
+    if not isinstance(question_details, list):
+        question_details = []
     multimodal_requirements = task.get("multimodal_requirements", [])
     if not isinstance(multimodal_requirements, list):
         multimodal_requirements = []
@@ -326,23 +434,41 @@ def synthesize_query_description(
     if language == "zh":
         freshness_phrase = _format_freshness_phrase_zh(freshness_window)
         topic_phrase = _summarize_main_task_zh(main_task)
-        dimension_clause = _build_dimension_blocks_zh(
-            sub_questions=sub_questions,
-            multimodal_requirements=multimodal_requirements,
-            topic_phrase=topic_phrase,
-        )
-
-        parts = [
-            f"本人作为{user_role}，正在撰写一份深度研究报告。",
-            (
+        if complexity == "low":
+            dimension_clause = _build_compact_dimension_blocks_zh(
+                sub_questions=sub_questions,
+                multimodal_requirements=multimodal_requirements,
+            )
+            intro = (
+                f"请聚焦{freshness_phrase}的最新数据、政策文本与权威文献，围绕{topic_phrase}展开研究，重点回答以下问题：{dimension_clause}。"
+                if dimension_clause
+                else f"请聚焦{freshness_phrase}的最新数据、政策文本与权威文献，围绕{topic_phrase}展开研究。"
+            )
+            closing = "请基于可核实来源形成简洁但专业的分析，并给出明确结论与建议。"
+        else:
+            dimension_clause = _build_detailed_dimension_blocks_zh(
+                sub_questions=sub_questions,
+                question_details=question_details,
+                multimodal_requirements=multimodal_requirements,
+                topic_phrase=topic_phrase,
+                complexity=complexity,
+            )
+            intro = (
                 f"请聚焦{freshness_phrase}的最新数据、政策文本与权威文献，围绕{topic_phrase}展开系统性研究，结合多源证据进行批判性分析，重点覆盖以下维度：{dimension_clause}。"
                 if dimension_clause
                 else f"请聚焦{freshness_phrase}的最新数据、政策文本与权威文献，围绕{topic_phrase}系统梳理关键事实、趋势、风险与实施路径。"
-            ),
+            )
+            closing = (
+                "请基于可核实来源形成结构化分析，明确关键证据、局限性、优先级排序与后续行动建议。"
+                if complexity == "medium"
+                else "请基于可核实来源形成结构化分析，分维度标注关键证据与对应引用，说明局限性、优先级排序、实施路径与后续行动建议。"
+            )
+
+        parts = [
+            f"本人作为{user_role}，正在撰写一份深度研究报告。",
+            intro,
         ]
-        parts.append(
-            "请基于可核实来源形成结构化分析，明确关键证据、局限性、优先级排序与后续行动建议。"
-        )
+        parts.append(closing)
         return "".join(parts)
 
     freshness_phrase = _format_freshness_phrase_en(freshness_window)
@@ -538,6 +664,98 @@ def _normalize_chart_description_zh(description: str) -> str:
     ):
         return text
     return _infer_chart_description_from_question_zh(text, text)
+
+
+def _build_compact_dimension_blocks_zh(
+    sub_questions: List[str],
+    multimodal_requirements: List[Dict[str, Any]],
+) -> str:
+    chart_visuals = _assign_chart_visuals_to_dimensions_zh(
+        sub_questions=sub_questions,
+        multimodal_requirements=multimodal_requirements,
+        topic_phrase="",
+    )
+    blocks = []
+    for index, question in enumerate(sub_questions, start=1):
+        text = str(question).strip().rstrip("。")
+        if not text:
+            continue
+        chart_visual = chart_visuals[index - 1] if index - 1 < len(chart_visuals) else {}
+        chart_clause = _render_visual_for_dimension_zh(chart_visual)
+        if chart_clause:
+            blocks.append(f"（{index}）{text}；{chart_clause}")
+        else:
+            blocks.append(f"（{index}）{text}")
+    return " ".join(blocks)
+
+
+def _build_detailed_dimension_blocks_zh(
+    sub_questions: List[str],
+    question_details: List[Dict[str, Any]],
+    multimodal_requirements: List[Dict[str, Any]],
+    topic_phrase: str,
+    complexity: str,
+) -> str:
+    chart_visuals = _assign_chart_visuals_to_dimensions_zh(
+        sub_questions=sub_questions,
+        multimodal_requirements=multimodal_requirements,
+        topic_phrase=topic_phrase,
+    )
+    image_assignments = _assign_images_to_dimensions_zh(
+        sub_questions=sub_questions,
+        multimodal_requirements=multimodal_requirements,
+    )
+
+    blocks = []
+    for index, question in enumerate(sub_questions, start=1):
+        detail = question_details[index - 1] if index - 1 < len(question_details) and isinstance(question_details[index - 1], dict) else {}
+        detail_text = _expand_dimension_detail_zh(question, topic_phrase)
+        analysis_points = []
+        if isinstance(detail, dict):
+            analysis_points = _ensure_string_list(detail.get("analysis_points", []))
+        analysis_points = analysis_points[: target_analysis_point_count(complexity)]
+        analysis_clause = _render_analysis_points_zh(analysis_points, complexity)
+
+        visual_clauses = []
+        chart_visual = chart_visuals[index - 1] if index - 1 < len(chart_visuals) else {}
+        chart_clause = _render_visual_for_dimension_zh(chart_visual)
+        if chart_clause:
+            visual_clauses.append(chart_clause)
+        image_visual = image_assignments.get(index - 1)
+        image_clause = _render_visual_for_dimension_zh(image_visual)
+        if image_clause:
+            visual_clauses.append(image_clause)
+
+        citation_clause = ""
+        if complexity == "high" and isinstance(detail, dict):
+            citations = _normalize_citation_items(detail.get("citations", []))
+            if citations:
+                citation_titles = [
+                    str(item.get("title", "")).strip()
+                    for item in citations
+                    if isinstance(item, dict) and str(item.get("title", "")).strip()
+                ]
+                if citation_titles:
+                    citation_clause = f"；并在该部分优先标注与解读《{citation_titles[0]}》等对应来源"
+
+        block = f"（{index}）{detail_text}"
+        if analysis_clause:
+            block = f"{block}；{analysis_clause}"
+        if visual_clauses:
+            block = f"{block}；" + "；".join(visual_clauses)
+        if citation_clause:
+            block = f"{block}{citation_clause}"
+        blocks.append(block)
+    return " ".join(blocks)
+
+
+def _render_analysis_points_zh(points: List[str], complexity: str) -> str:
+    cleaned = [point.strip().rstrip("。") for point in points if point.strip()]
+    if not cleaned:
+        return ""
+    if complexity == "medium":
+        return "重点包括" + "、".join(cleaned)
+    return "至少覆盖" + "；".join(cleaned)
 
 
 def _build_dimension_blocks_zh(

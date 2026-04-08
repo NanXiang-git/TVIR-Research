@@ -1,0 +1,38 @@
+{
+  "domain": "人工智呢",
+  "complexity": "low",
+  "candidates": [
+    {
+      "topic": "生成式AI赋能产业变革的实践路径与案例分析",
+      "rationale": "生成式AI（如大模型、AIGC等）已成为推动产业升级和创新的重要力量。2025年后，生成式AI在制造、金融、医疗等行业的应用持续扩展，带来生产效率提升和新业务模式。该主题不仅有现实商业价值，还能拆分为技术路线、产业案例、政策环境、风险治理等多维度研究任务，适合自动化任务生成和多模态分析。典型用户角色包括企业决策者、行业研究员、政策制定者。",
+      "relevance_score": 9.5,
+      "source_links": [
+        "https://assets.kpmg.com/content/dam/kpmgsites/cn/pdf/zh/2025/07/the-practice-and-path-of-generative-ai-empowering-industrial-transformation.pdf.coredownload.pdf"
+      ]
+    },
+    {
+      "topic": "“人工智能+”政策驱动下的新质生产力发展路径",
+      "rationale": "2025年国务院发布《人工智能+》行动意见，明确AI赋能新质生产力的重点方向。该主题聚焦政策推动、产业落地、技术创新、企业生态等内容，具有政策前沿性和现实指导意义。可拆分为政策解读、产业案例、技术路线、企业创新生态等任务，适合自动化结构化研究。典型用户角色为政策分析师、产业规划师、企业战略部门。",
+      "relevance_score": 9,
+      "source_links": [
+        "https://pdf.dfcfw.com/pdf/H3_AP202509021738028478_1.pdf?1756823509000.pdf"
+      ]
+    },
+    {
+      "topic": "全球AI市场机会与知识产权分布趋势分析",
+      "rationale": "2021-2025年AI创新专利持续突破，运算模型、数据处理、计算机视觉等领域专利数量激增。该主题关注全球AI市场格局、知识产权热点、技术壁垒、产业竞争，适合拆分为专利分析、市场趋势、区域对比、技术路线等任务，支持多模态图表分析。典型用户角色为知识产权分析师、产业投资者、技术战略顾问。",
+      "relevance_score": 8.7,
+      "source_links": [
+        "https://naipnews.naipo.com/zh-hans/32276/"
+      ]
+    }
+  ],
+  "selected_topic": {
+    "topic": "生成式AI赋能产业变革的实践路径与案例分析",
+    "rationale": "生成式AI是2021年以来产业智能化升级的核心驱动力，已在多个行业形成可量化的应用成果和创新模式。该主题不仅具备现实商业价值，还能自然拆分为技术路线、产业案例、政策环境、风险治理等多维度自动化研究任务，且支持后续多模态分析。适合企业决策者、行业研究员、政策制定者等用户角色。来源新鲜，内容具体，具备高度可执行性。",
+    "source_links": [
+      "https://assets.kpmg.com/content/dam/kpmgsites/cn/pdf/zh/2025/07/the-practice-and-path-of-generative-ai-empowering-industrial-transformation.pdf.coredownload.pdf"
+    ],
+    "freshness_window": "2025年7月"
+  }
+}

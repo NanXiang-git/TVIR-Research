@@ -1,0 +1,74 @@
+{
+  "user_role": "能源政策研究员",
+  "main_task": "研究区块链技术在分布式能源系统中的应用及其对市场创新和政策支持的影响。",
+  "sub_questions": [
+    "区块链技术如何增强分布式能源交易的透明度和安全性？",
+    "跨学科应用区块链技术对分布式能源市场创新的驱动因素分析",
+    "区块链技术在分布式能源系统中的政策支持与实施挑战"
+  ],
+  "multimodal_requirements": [
+    {
+      "type": "image",
+      "description": "区块链在分布式能源交易中的应用示意图",
+      "source": "https://www.nengyuanjie.net/article/65202.html",
+      "verification": "No publicly accessible direct image URL could be validated automatically."
+    },
+    {
+      "type": "chart",
+      "description": "区块链技术对分布式能源市场交易量影响的折线图",
+      "source_page": "https://m.ne21.com/news/show-149674.html",
+      "data_source": "https://m.ne21.com/news/show-149674.html",
+      "reproducibility_note": "数据来源于行业报告，图表可通过数据分析工具重现"
+    },
+    {
+      "type": "chart",
+      "description": "分布式能源系统中区块链应用的政策支持对比表格",
+      "source_page": "Ben Line | Home",
+      "data_source": "https://benline.com/",
+      "reproducibility_note": "Use the public source page 'Ben Line | Home' and extract the quantitative values described there to rebuild the chart."
+    },
+    {
+      "type": "image",
+      "description": "分布式能源系统的区块链应用关键机制示意图",
+      "source": "https://dgjsxb.ces-transaction.com/fileup/HTML/images/54e92493a6fcdb20a6870314f1f806db.jpg",
+      "verification": "Validated by direct HTTP accessibility check and VQA content check.",
+      "source_page": "https://dgjsxb.ces-transaction.com/fileup/HTML/2025-19-6057.htm"
+    },
+    {
+      "type": "image",
+      "description": "分布式能源系统的区块链应用关键机制示意图",
+      "verification": "No publicly accessible direct image URL could be validated automatically.",
+      "source": ""
+    }
+  ],
+  "citations": [
+    {
+      "label": "reference",
+      "url": "https://www.nengyuanjie.net/article/65202.html"
+    },
+    {
+      "label": "reference",
+      "url": "https://m.ne21.com/news/show-149674.html"
+    },
+    {
+      "label": "reference",
+      "url": "http://www.sgcio.com/technology/pm/46670.html"
+    },
+    {
+      "label": "topic_source_1",
+      "url": "https://www.nature.com/articles/s41560-019-0428-0"
+    },
+    {
+      "label": "topic_source_2",
+      "url": "https://www.energycentral.com/c/tt/blockchain-distributed-energy-future"
+    },
+    {
+      "label": "chart_source",
+      "url": "https://benline.com/"
+    },
+    {
+      "label": "image_source",
+      "url": "https://dgjsxb.ces-transaction.com/fileup/HTML/2025-19-6057.htm"
+    }
+  ]
+}

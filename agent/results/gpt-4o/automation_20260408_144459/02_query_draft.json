@@ -1,0 +1,49 @@
+{
+  "complexity": "low",
+  "user_role": "某医疗健康研究机构的政策分析师",
+  "main_task": "本人作为某医疗健康研究机构的政策分析师，正在撰写一份关于互联网医疗政策与市场发展趋势的深度研究报告。该报告旨在分析互联网医疗在政策支持和技术融合下的快速发展路径，尤其关注中国市场的政策顶层设计和技术赋能对医疗体系转型的影响。",
+  "sub_questions": [
+    "政策驱动因素分析：研究近年来中国互联网医疗相关政策的出台背景、主要内容及其对行业发展的影响。",
+    "技术融合与应用案例：探讨5G、AI等技术在互联网医疗中的具体应用案例及其带来的服务模式变革。",
+    "市场规模与趋势预测：分析互联网医疗市场的现状及未来发展趋势，预测市场规模的增长潜力。"
+  ],
+  "question_details": [],
+  "multimodal_requirements": [
+    {
+      "type": "chart",
+      "description": "中国互联网医疗政策出台时间轴图柱状图",
+      "source": "https://www.chyxx.com/industry/1249007.html",
+      "verification": "通过搜索和网站抓取验证政策时间轴的准确性。",
+      "reproducibility_note": "政策时间轴需与实际政策文件匹配，确保信息准确。"
+    },
+    {
+      "type": "image",
+      "description": "5G技术在互联网医疗中的应用场景图",
+      "source": "待验证",
+      "verification": "使用图像搜索和视觉问答工具验证图片内容的匹配度。",
+      "reproducibility_note": "图片需真实反映5G技术在医疗场景中的应用，非装饰性图片。"
+    },
+    {
+      "type": "chart",
+      "description": "互联网医疗市场规模增长趋势折线图",
+      "source": "https://www.chyxx.com/industry/1249007.html",
+      "verification": "通过搜索和网站抓取验证市场规模数据的来源和准确性。",
+      "reproducibility_note": "市场规模数据需与权威市场研究报告一致。"
+    },
+    {
+      "type": "chart",
+      "description": "市场规模与趋势预测：分析互联网医疗市场的现状及未来发展趋势，预测市场规模的增长潜力折线图",
+      "data_source": "",
+      "reproducibility_note": ""
+    }
+  ],
+  "citations": [
+    {
+      "label": "reference",
+      "url": "https://www.chyxx.com/industry/1249007.html",
+      "title": "2021年中国互联网医疗行业市场现状及发展趋势分析",
+      "used_for": "政策分析和市场规模预测",
+      "key_finding": "互联网医疗在政策支持下快速发展，市场规模持续增长。"
+    }
+  ]
+}

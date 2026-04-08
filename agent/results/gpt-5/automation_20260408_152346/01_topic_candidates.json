@@ -1,0 +1,48 @@
+{
+  "domain": "集成电路",
+  "complexity": "low",
+  "candidates": [
+    {
+      "topic": "HBM3E/HBM4（2024-2026）供需与先进封装瓶颈：价格走势、产能扩张与供应链风险建模",
+      "rationale": "现实价值：HBM已成为AI加速卡与高端训练/推理平台的核心成本与性能瓶颈。随着HBM3E在2025-2026年主导、HBM4/4E在2026-2027年量产与定制化推进，整机交付周期、毛利率与议价能力高度受制于HBM与先进封装（如CoWoS/2.5D/3D堆叠）产能与良率。研究价值：多源数据可用（产业研究、厂商路标、价格/份额观察），可构建供需-价格-交付期的因果图与情景分析（例如大型云厂商与GPU厂商的需求脉冲对HBM价格弹性）。前沿性：最新动态显示HBM4E或在2027年达约40%渗透、并形成“逻辑die定制”趋势，竞争格局与Foundry协作方式正在变化。适合结构化任务：可拆分为数据抓取（价格、份额、路标）、产能-封装配套映射、政策与扩产时间线、预测模型（供需/价格/良率敏感性）与图表化（路线图、桑基图、时序图）。值得研究与适合自动化任务：具备高频更新的数据源与时间序列，便于构建自动抓取-清洗-建模流水线。典型用户角色：采购/供应链经理（服务器/AI整机）、存储与封装厂战略团队、投资与政策分析师。",
+      "relevance_score": 95,
+      "source_links": [
+        "https://www.trendforce.com/news/2025/11/13/news-hbm4e-seen-hitting-40-of-2027-market-samsung-sk-hynix-reportedly-aim-for-1h26-completion/",
+        "https://news.skhynix.com/2026-market-outlook-focus-on-the-hbm-led-memory-supercycle/",
+        "https://www.tomshardware.com/tech-industry/semiconductors/hbm-roadmaps-for-micron-samsung-and-sk-hynix-to-hbm4-and-beyond",
+        "https://www.trendforce.com/presscenter/news/20251029-12758.html"
+      ]
+    },
+    {
+      "topic": "High-NA EUV 部署与DTCO准备度（2024-2026）：Intel EXE:5200落地、掩模/光刻材料/成本影响评估",
+      "rationale": "现实价值：High-NA EUV决定2nm及后续节点的成本结构、良率曲线与设计规则，影响Foundry竞争力与客户产品上市节奏。研究价值：围绕工具交付、试产验证、掩模与抗蚀剂、pellicle、多重曝光策略与EDA/DTCO的多维数据可系统化汇整，评估制造窗口、成本/层数/吞吐的权衡。前沿性：Intel在2024年率先接收并推进高NA验证，产业正在构建从规则到材料的配套生态。适合结构化任务：拆解为设备交付时间线、工艺模块变化（掩模、光源、resist）、设计规则对比、单位成本模型、风险清单与缓解路径，输出流程图、对比表与成本敏感性图。值得研究与适合自动化任务：信息点标准化强，可自动爬取官方新闻稿、财报和技术简报并构建成本/良率演进模型。典型用户角色：Foundry工艺集成与资本开支规划、EDA/掩模/材料供应商产品规划、系统芯片客户工艺路线选择团队。",
+      "relevance_score": 90,
+      "source_links": [
+        "https://www.reuters.com/technology/asml-ships-first-high-na-lithography-system-intel-statement-2023-12-21/",
+        "https://newsroom.intel.com/press-kit/intel-high-na-euv",
+        "https://www.sdxcentral.com/news/intel-acquires-asmls-entire-2024-stock-of-high-na-euv-machines/",
+        "https://semiwiki.com/forum/threads/intel-produced-30-000-wafers-on-asmls-high-na-euv.22151/"
+      ]
+    },
+    {
+      "topic": "美国CHIPS法案高级封装（NAPMP/AP）资金与产能布局（2024-2026）：项目清单、受资方、能力缺口与产能地图",
+      "rationale": "现实价值：美国以高级封装作为重建本土半导体供应链的突破口，涉及R&D中心、产线扩建与税收优惠，影响本土OSAT/Foundry/IDM的产能平衡与生态协同。研究价值：政策文本、NOFO、授资公告与企业扩建计划可标准化抽取，形成资金-项目-产能的可视化数据库，支持地区经济与产业政策评估。前沿性：2024年发布高级封装R&D NOFO，2024-2025年多笔资金落地，产业侧对2.5D/3D、异构集成的投资窗口正在形成。适合结构化任务：可拆分为数据采集（NOFO/授资/税抵）、项目画像（地点、工艺、规模、时间线）、产能测算模型与政策效果基准对比，输出地理热力图与进度甘特图。值得研究与适合自动化任务：政策与项目数据格式化程度高，利于自动抓取、实体对齐与时空映射。典型用户角色：政策制定与园区招商、封装与设备厂商投资决策、咨询与研究机构的产业影响评估。",
+      "relevance_score": 86,
+      "source_links": [
+        "https://www.oig.doc.gov/wp-content/OIGPublications/OIG-25-021-I.pdf",
+        "https://www.bakertilly.com/insights/final"
+      ]
+    }
+  ],
+  "selected_topic": {
+    "topic": "HBM3E/HBM4（2024-2026）供需与先进封装瓶颈：价格走势、产能扩张与供应链风险建模",
+    "rationale": "现实价值：HBM已成为AI加速卡与高端训练/推理平台的核心成本与性能瓶颈。随着HBM3E在2025-2026年主导、HBM4/4E在2026-2027年量产与定制化推进，整机交付周期、毛利率与议价能力高度受制于HBM与先进封装（如CoWoS/2.5D/3D堆叠）产能与良率。研究价值：多源数据可用（产业研究、厂商路标、价格/份额观察），可构建供需-价格-交付期的因果图与情景分析（例如大型云厂商与GPU厂商的需求脉冲对HBM价格弹性）。前沿性：最新动态显示HBM4E或在2027年达约40%渗透、并形成“逻辑die定制”趋势，竞争格局与Foundry协作方式正在变化。适合结构化任务：可拆分为数据抓取（价格、份额、路标）、产能-封装配套映射、政策与扩产时间线、预测模型（供需/价格/良率敏感性）与图表化（路线图、桑基图、时序图）。值得研究与适合自动化任务：具备高频更新的数据源与时间序列，便于构建自动抓取-清洗-建模流水线。典型用户角色：采购/供应链经理（服务器/AI整机）、存储与封装厂战略团队、投资与政策分析师。",
+    "source_links": [
+      "https://www.trendforce.com/news/2025/11/13/news-hbm4e-seen-hitting-40-of-2027-market-samsung-sk-hynix-reportedly-aim-for-1h26-completion/",
+      "https://news.skhynix.com/2026-market-outlook-focus-on-the-hbm-led-memory-supercycle/",
+      "https://www.tomshardware.com/tech-industry/semiconductors/hbm-roadmaps-for-micron-samsung-and-sk-hynix-to-hbm4-and-beyond",
+      "https://www.trendforce.com/presscenter/news/20251029-12758.html"
+    ],
+    "freshness_window": "2021+"
+  }
+}
